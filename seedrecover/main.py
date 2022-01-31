@@ -31,8 +31,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def possible_seed_words(wordlist: Wordlist, known: list[str],
-                        similar: int) -> list[list[str]]:
+def get_seed(wordlist: Wordlist, known: list[str],
+             similar: int) -> list[list[str]]:
     """Determine possible seed words from given known words."""
     seed = []
     for word in known:
@@ -44,7 +44,7 @@ def possible_seed_words(wordlist: Wordlist, known: list[str],
     return seed
 
 
-def compute_length(length: Optional[int], known: int) -> int:
+def get_length(length: Optional[int], known: int) -> int:
     """Determine length of seed phrase to search for."""
     if not length:
         print("Length not set. Using smallest length for given phrase.",
@@ -62,8 +62,8 @@ def compute_length(length: Optional[int], known: int) -> int:
     return length
 
 
-def determine_missing_positions(given: list[int], length: int,
-                                missing: int) -> list[int]:
+def get_missing_positions(given: list[int], length: int,
+                          missing: int) -> list[int]:
     """Check or determine positions for missing words."""
     missing_positions = [i-1 for i in given]
     if not missing_positions:
@@ -79,7 +79,7 @@ def main() -> None:
     """Execute the main control flow of the seedrecover script."""
     args = parse_args()
     wordlist = Wordlist(args.wordlist)
-    seed = possible_seed_words(wordlist, args.seed, args.similar)
-    length = compute_length(args.length, len(seed))
-    missing_positions = determine_missing_positions(args.missing, length,
-                                                    length - len(seed))
+    seed = get_seed(wordlist, args.seed, args.similar)
+    length = get_length(args.length, len(seed))
+    missing_positions = get_missing_positions(args.missing, length,
+                                              length - len(seed))
