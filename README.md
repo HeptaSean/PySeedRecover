@@ -70,7 +70,7 @@ options:
   -k STAKE KEY [STAKE KEY ...], --key STAKE KEY [STAKE KEY ...]
                         check for stake keys
   -b API KEY, --blockfrost API KEY
-                        check on blockfrost
+                        check on BlockFrost
 ```
 
 We are using a test wallet that I generated with the following seed phrase:

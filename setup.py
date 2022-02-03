@@ -14,6 +14,7 @@ setuptools.setup(
     url="https://github.com/HeptaSean/PySeedRecover",
     packages=["seedrecover"],
     install_requires=[
+        "blockfrost-python",
     ],
     extras_require={
         "dev": [

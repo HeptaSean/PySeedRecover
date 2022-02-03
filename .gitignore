@@ -3,3 +3,4 @@ build/
 dist/
 venv/
 PySeedRecover.egg-info/
+BLOCKFROST_PROJECT_ID
