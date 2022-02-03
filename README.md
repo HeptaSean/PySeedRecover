@@ -73,6 +73,82 @@ options:
                         check on blockfrost
 ```
 
+We are using a test wallet that I generated with the following seed phrase:
+```
+ladder   long     kangaroo inherit  unknown  prize
+else     second   enter    addict   mystery  valve
+riot     attitude area     blind    fabric   symbol
+skill    sunset   goose    shock    gasp     grape
+```
+The stake key for this test wallet is
+`stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq`.
+
+The simplest way to get something wrong are just small typos, some of which
+may lead to other valid words, some of which not.
+If we suspect that we did that, we can choose with the `-s`/`--similar`
+option, up to which edit distance we want to search for valid seed phrases:
+```shell
+$ seedrecover -s 1 ladder long kangaroo inherit unknown price else second \
+  enter addict mystery valve riot altitude area blind fabric symbol skill \
+  sunset goose shock gap grape
+```
+
+If a word is missing from your seed phrase and you know, at which position
+it is missing, you can give the position (or several possible positions)
+with the `-m`/`--missing` option:
+```shell
+$ seedrecover -m 1 24 ladder long kangaroo inherit unknown prize else \
+  second enter addict mystery valve riot attitude area blind fabric symbol \
+  skill sunset goose shock gasp
+```
+
+If you do not know, at which position a word is missing (or if several
+words are missing), the possibilities become too many to manually check.
+With `-k`/`--key`, we can give one or several stake keys to search for
+(as usual on Unix systems, the list of options can be terminated with `--`
+to start with the known words of the seed phrase):
+```shell
+$ seedrecover -k stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq \
+  stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n -- ladder long \
+  kangaroo inherit unknown prize else second enter mystery valve riot \
+  attitude area blind fabric symbol skill sunset goose shock gasp grape
+```
+
+It is also possible to abbreviate the searched stake key(s) by `...` in the
+middle:
+```shell
+$ seedrecover -k stake1u9...24r8yq stake1u9...calg0n -- ladder long \
+  kangaroo inherit unknown prize else second enter mystery valve riot \
+  attitude area blind fabric symbol skill sunset goose shock gasp grape
+```
+
+If you are unsure about the order (for example, exchanged rows and
+columns), the `-o`/`--order` option allows to check all permutations of the
+given words (leading to many, many phrases to check):
+```shell
+$ seedrecover -k stake1u9...24r8yq stake1u9...calg0n -o ladder else riot \
+  skill long second attitude sunset kangaroo enter area goose inherit \
+  addict blind shock unknown mystery fabric gasp prize valve symbol grape
+```
+
+If the searched stake key is unknown, the stake keys can be checked via
+[blockfrost.io](https://blockfrost.io/) for previous activity.
+For this, an API key has to be given with the `-b`/`--blockfrost` option
+(can be obtained on the given website):
+```shell
+$ seedrecover -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ -o ladder else riot \
+  skill long second attitude sunset kangaroo enter area goose inherit \
+  addict blind shock unknown mystery fabric gasp prize valve symbol grape
+```
+
+So, if we do not have any idea, what is wrong with the seed phrase, we can
+combine all these possibilities:
+```shell
+$ time seedrecover -s 1 -o -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ ladder else \
+  riot skill long second altitude sunset kangaroo enter area goose inherit \
+  blind shock unknown mystery fabric gap price valve symbol grape
+```
+
 ## Development
 To set up a development environment for this project:
 ```
