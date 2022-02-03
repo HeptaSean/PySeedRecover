@@ -10,9 +10,9 @@ after restoring/importing with a seed phrase.
 Since seed phrases contain a checksum, it is very unlikely to get to
 another valid seed phrase (that opens an empty wallet) by wrong orders or
 typos.
-This rather indicates that the restored/imported seed phrase is the wrong
-one altogether – saved from a trial that was never really used or something
-like that.
+Empty wallets rather indicate that the restored/imported seed phrase is the
+wrong one altogether – saved from a trial that was never really used or
+something like that.
 
 ## Crypto Currency Disclaimer
 I do not endorse the use of crypto currencies or the ecosystems built around
@@ -72,6 +72,12 @@ options:
   -b API KEY, --blockfrost API KEY
                         check on BlockFrost
 ```
+> **WARNING:** If you give your (partial knowledge of your) seed phrase to
+> this script on the command line, this information will be in the history
+> of the shell you are using.
+> It is also visible on screen and can perhaps be scrolled back.
+> For security, clear the history and close the terminal after using this
+> script.
 
 We are using a test wallet that I generated with the following seed phrase:
 ```
@@ -126,20 +132,22 @@ If you are unsure about the order (for example, exchanged rows and
 columns), the `-o`/`--order` option allows to check all permutations of the
 given words (leading to many, many phrases to check):
 ```shell
-$ seedrecover -k stake1u9...24r8yq stake1u9...calg0n -o ladder else riot \
+$ seedrecover -o -k stake1u9...24r8yq stake1u9...calg0n ladder else riot \
   skill long second attitude sunset kangaroo enter area goose inherit \
   addict blind shock unknown mystery fabric gasp prize valve symbol grape
 ```
 
 If the searched stake key is unknown, the stake keys can be checked via
-[blockfrost.io](https://blockfrost.io/) for previous activity.
+[BlockFrost](https://blockfrost.io/) for previous activity.
 For this, an API key has to be given with the `-b`/`--blockfrost` option
 (can be obtained on the given website):
 ```shell
-$ seedrecover -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ -o ladder else riot \
+$ seedrecover -o -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ ladder else riot \
   skill long second attitude sunset kangaroo enter area goose inherit \
   addict blind shock unknown mystery fabric gasp prize valve symbol grape
 ```
+(This perhaps needs a lot of requests to BlockFrost.
+Remember that there is a limit of 50 000 requests in the free tier.)
 
 So, if we do not have any idea, what is wrong with the seed phrase, we can
 combine all these possibilities:
