@@ -36,8 +36,6 @@ bfkeycheck.InactiveError: Invalid BlockFrost API key!
 The wrapper prevents subsequent calls to the API if one call has failed due
 to invalid key, request limit, or server errors.
 """
-import sys
-
 from blockfrost import BlockFrostApi, ApiError  # type: ignore
 
 
