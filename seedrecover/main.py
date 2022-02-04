@@ -1,8 +1,19 @@
-"""Command line interface including input and output."""
+"""Command line interface including input and output.
+
+TODO order.py: -o (with -l and -m)
+TODO keyderiv.py: entropy from seed phrase
+TODO keyderiv.py: stake key from entropy
+
+TODO keycheck.py: Check for plausible structure of given keys
+TODO order.py: Avoid repetitions of same seed phrases
+TODO Byron, Ledger, and Trezor support
+"""
 import argparse
 import sys
 
 from seedrecover.wordlist import Wordlist
+from seedrecover.keycheck import StakeKeys
+from seedrecover.bfkeycheck import BlockFrost, InactiveError
 
 from typing import Optional
 
@@ -27,7 +38,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("-k", "--key", nargs="+", default=[],
                         help="check for stake keys", metavar="STAKE KEY")
     parser.add_argument("-b", "--blockfrost",
-                        help="check on blockfrost", metavar="API KEY")
+                        help="check on BlockFrost", metavar="API KEY")
     return parser.parse_args()
 
 
@@ -83,3 +94,47 @@ def main() -> None:
     length = get_length(args.length, len(seed))
     missing_positions = get_missing_positions(args.missing, length,
                                               length - len(seed))
+    sk = None
+    if args.key:
+        sk = StakeKeys(args.key)
+    bf = None
+    if args.blockfrost:
+        try:
+            bf = BlockFrost(args.blockfrost)
+        except InactiveError as e:
+            print(e, file=sys.stderr)
+            bf = None
+    total_seed_phrases = 0
+    checksum_seed_phrases = 0
+    for seed_phrase in []:  # iterate by order, variations and missing
+        total_seed_phrases += 1
+        try:
+            stake_key = ""  # derive stake key (if checksum fulfilled)
+        except:  # ChecksumError
+            continue
+        checksum_seed_phrases += 1
+        searched = False
+        active = False
+        verbose = True
+        if sk:
+            if sk.check_stake_key(stake_key):
+                searched = True
+            verbose = False
+        if bf:
+            try:
+                if bf.check_stake_key(stake_key):
+                    active = True
+                verbose = False
+            except InactiveError as e:
+                print(e, file=sys.stderr)
+                bf = None
+        if searched and active:
+            print("Searched and active stake key found:")
+        elif searched:
+            print("Searched stake key found:")
+        elif active:
+            print("Active stake key found:")
+        if searched or active or verbose:
+            print(f"{stake_key}: {seed_phrase}")
+    print(f"{total_seed_phrases} seed phrases checked.", file=sys.stderr)
+    print(f"{checksum_seed_phrases} fulfilled checksum.", file=sys.stderr)
