@@ -1,6 +1,5 @@
 """Command line interface including input and output.
 
-TODO order.py: -o (with -l and -m)
 TODO keyderiv.py: entropy from seed phrase
 TODO keyderiv.py: stake key from entropy
 
@@ -12,6 +11,7 @@ import argparse
 import sys
 
 from seedrecover.wordlist import Wordlist
+from seedrecover.order import iterate
 from seedrecover.keycheck import StakeKeys
 from seedrecover.bfkeycheck import BlockFrost, InactiveError
 
@@ -106,10 +106,11 @@ def main() -> None:
             bf = None
     total_seed_phrases = 0
     checksum_seed_phrases = 0
-    for seed_phrase in []:  # iterate by order, variations and missing
+    for seed_phrase in iterate(seed, args.order, wordlist,
+                               length, missing_positions):
         total_seed_phrases += 1
         try:
-            stake_key = ""  # derive stake key (if checksum fulfilled)
+            stake_key = "TODO"  # derive stake key (if checksum fulfilled)
         except:  # ChecksumError
             continue
         checksum_seed_phrases += 1
@@ -135,6 +136,6 @@ def main() -> None:
         elif active:
             print("Active stake key found:")
         if searched or active or verbose:
-            print(f"{stake_key}: {seed_phrase}")
+            print(f"{stake_key}: {' '.join(seed_phrase)}")
     print(f"{total_seed_phrases} seed phrases checked.", file=sys.stderr)
     print(f"{checksum_seed_phrases} fulfilled checksum.", file=sys.stderr)
