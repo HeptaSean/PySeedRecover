@@ -33,8 +33,16 @@ some people get their wallets back).
 
 ## Installation
 You need a working Python 3 installation on your machine.
+I do development on the newest stable version (3.10), but test it also on
+the oldest
+[still supported](https://devguide.python.org/#status-of-python-branches)
+version (3.7).
+
 Installation instructions for Windows can be found at:
 [https://docs.microsoft.com/en-us/windows/python/beginners](https://docs.microsoft.com/en-us/windows/python/beginners)
+(That guide links to Python 3.7, Python 3.10 can be found at
+[https://www.microsoft.com/de-de/p/python-310/9pjpw5ldxlz5](https://www.microsoft.com/de-de/p/python-310/9pjpw5ldxlz5).)
+
 For APT-based Linux distributions `apt install python3 python3-pip` should
 be enough and for Arch-based Linux distributions `pacman -S python
 python-pip` will install everything that is needed.
