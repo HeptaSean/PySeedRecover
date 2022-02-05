@@ -5,7 +5,9 @@ loaded or a wordlist file can be given to the constructor.
 >>> wordlist = Wordlist()
 
 With iterate_all, all words in the word list can be iterated over:
->>> list(wordlist.iterate_all())  # doctest: +ELLIPSIS
+>>> list(wordlist)  # doctest: +ELLIPSIS
+['abandon', 'ability', 'able', ..., 'zero', 'zone', 'zoo']
+>>> list(wordlist)  # doctest: +ELLIPSIS
 ['abandon', 'ability', 'able', ..., 'zero', 'zone', 'zoo']
 
 With get_number, the number for a word in the wordlist can be retrieved:
@@ -128,10 +130,9 @@ class Wordlist:
                 word = line.strip()
                 self._words.append(word)
 
-    def iterate_all(self) -> Iterator[str]:
-        """Iterate all words in wordlist."""
-        for word in self._words:
-            yield word
+    def __iter__(self) -> Iterator[str]:
+        """Return iterator for words in list."""
+        return self._words.__iter__()
 
     def get_number(self, word: str) -> int:
         """Get the number for a given word."""
