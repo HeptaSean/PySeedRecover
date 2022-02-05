@@ -1,4 +1,46 @@
-"""Permutations, combinations, and extensions of given lists."""
+"""Permutations, combinations, and extensions of given lists.
+
+The iterate function can do all of the variations together.
+* The first argument is a list of lists of possible values for each position.
+* The second argument decides if permutations of the given values should be
+  done.
+* The third argument is an iterable of all values to be tried in missing
+  positions. The fourth arguments is the total target length and the fifth
+  argument is a list of positions (of the final lists) to try as missing
+  positions.
+>>> list(iterate([["fst1", "fst2"], ["scd1"], ["thd1"]], False,
+...              ["all1", "all2"], 4, [0,3]))  # doctest: +NORMALIZE_WHITESPACE
+[['all1', 'fst1', 'scd1', 'thd1'], ['all2', 'fst1', 'scd1', 'thd1'],
+ ['fst1', 'scd1', 'thd1', 'all1'], ['fst1', 'scd1', 'thd1', 'all2'],
+ ['all1', 'fst2', 'scd1', 'thd1'], ['all2', 'fst2', 'scd1', 'thd1'],
+ ['fst2', 'scd1', 'thd1', 'all1'], ['fst2', 'scd1', 'thd1', 'all2']]
+>>> list(iterate([["fst1", "fst2"], ["scd1"], ["thd1"]], True,
+...              ["all1", "all2"], 4, [0,3]))  # doctest: +NORMALIZE_WHITESPACE
+[['all1', 'fst1', 'scd1', 'thd1'], ['all2', 'fst1', 'scd1', 'thd1'],
+ ['fst1', 'scd1', 'thd1', 'all1'], ['fst1', 'scd1', 'thd1', 'all2'],
+ ['all1', 'fst2', 'scd1', 'thd1'], ['all2', 'fst2', 'scd1', 'thd1'],
+ ['fst2', 'scd1', 'thd1', 'all1'], ['fst2', 'scd1', 'thd1', 'all2'],
+ ['all1', 'fst1', 'thd1', 'scd1'], ['all2', 'fst1', 'thd1', 'scd1'],
+ ['fst1', 'thd1', 'scd1', 'all1'], ['fst1', 'thd1', 'scd1', 'all2'],
+ ['all1', 'fst2', 'thd1', 'scd1'], ['all2', 'fst2', 'thd1', 'scd1'],
+ ['fst2', 'thd1', 'scd1', 'all1'], ['fst2', 'thd1', 'scd1', 'all2'],
+ ['all1', 'scd1', 'fst1', 'thd1'], ['all2', 'scd1', 'fst1', 'thd1'],
+ ['scd1', 'fst1', 'thd1', 'all1'], ['scd1', 'fst1', 'thd1', 'all2'],
+ ['all1', 'scd1', 'fst2', 'thd1'], ['all2', 'scd1', 'fst2', 'thd1'],
+ ['scd1', 'fst2', 'thd1', 'all1'], ['scd1', 'fst2', 'thd1', 'all2'],
+ ['all1', 'scd1', 'thd1', 'fst1'], ['all2', 'scd1', 'thd1', 'fst1'],
+ ['scd1', 'thd1', 'fst1', 'all1'], ['scd1', 'thd1', 'fst1', 'all2'],
+ ['all1', 'scd1', 'thd1', 'fst2'], ['all2', 'scd1', 'thd1', 'fst2'],
+ ['scd1', 'thd1', 'fst2', 'all1'], ['scd1', 'thd1', 'fst2', 'all2'],
+ ['all1', 'thd1', 'fst1', 'scd1'], ['all2', 'thd1', 'fst1', 'scd1'],
+ ['thd1', 'fst1', 'scd1', 'all1'], ['thd1', 'fst1', 'scd1', 'all2'],
+ ['all1', 'thd1', 'fst2', 'scd1'], ['all2', 'thd1', 'fst2', 'scd1'],
+ ['thd1', 'fst2', 'scd1', 'all1'], ['thd1', 'fst2', 'scd1', 'all2'],
+ ['all1', 'thd1', 'scd1', 'fst1'], ['all2', 'thd1', 'scd1', 'fst1'],
+ ['thd1', 'scd1', 'fst1', 'all1'], ['thd1', 'scd1', 'fst1', 'all2'],
+ ['all1', 'thd1', 'scd1', 'fst2'], ['all2', 'thd1', 'scd1', 'fst2'],
+ ['thd1', 'scd1', 'fst2', 'all1'], ['thd1', 'scd1', 'fst2', 'all2']]
+"""
 from typing import TypeVar, Iterable, Iterator
 
 X = TypeVar('X')
