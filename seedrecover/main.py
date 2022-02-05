@@ -104,8 +104,10 @@ def main() -> None:
         except InactiveError as e:
             print(e, file=sys.stderr)
             bf = None
+    already_checked = set()
     total_seed_phrases = 0
     checksum_seed_phrases = 0
+    norepeat_seed_phrases = 0
     for seed_phrase in iterate(seed, args.order, wordlist,
                                length, missing_positions):
         total_seed_phrases += 1
@@ -114,6 +116,10 @@ def main() -> None:
         except:  # ChecksumError
             continue
         checksum_seed_phrases += 1
+        if stake_key in already_checked:
+            continue
+        already_checked.add(stake_key)
+        norepeat_seed_phrases += 1
         searched = False
         active = False
         verbose = True
@@ -137,5 +143,6 @@ def main() -> None:
             print("Active stake key found:")
         if searched or active or verbose:
             print(f"{stake_key}: {' '.join(seed_phrase)}")
-    print(f"{total_seed_phrases} seed phrases checked.", file=sys.stderr)
-    print(f"{checksum_seed_phrases} fulfilled checksum.", file=sys.stderr)
+    print(f"{total_seed_phrases:10_} seed phrases checked.", file=sys.stderr)
+    print(f"{checksum_seed_phrases:10_} fulfilled checksum.", file=sys.stderr)
+    print(f"{norepeat_seed_phrases:10_} without repetitions.", file=sys.stderr)
