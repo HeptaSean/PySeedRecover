@@ -1,17 +1,18 @@
 """Command line interface including input and output.
 
-TODO keyderiv.py: entropy from seed phrase
 TODO keyderiv.py: stake key from entropy
 
 TODO keycheck.py: Check for plausible structure of given keys
 TODO order.py: Avoid repetitions of same seed phrases
 TODO Byron, Ledger, and Trezor support
+TODO Multi-account support
 """
 import argparse
 import sys
 
 from seedrecover.wordlist import Wordlist
 from seedrecover.order import iterate
+from seedrecover.keyderiv import seed2stakekey, ChecksumError
 from seedrecover.keycheck import StakeKeys
 from seedrecover.bfkeycheck import BlockFrost, InactiveError
 
@@ -112,8 +113,8 @@ def main() -> None:
                                length, missing_positions):
         total_seed_phrases += 1
         try:
-            stake_key = "TODO"  # derive stake key (if checksum fulfilled)
-        except:  # ChecksumError
+            stake_key = seed2stakekey(seed_phrase, wordlist)
+        except ChecksumError:
             continue
         checksum_seed_phrases += 1
         if stake_key in already_checked:
