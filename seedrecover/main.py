@@ -12,7 +12,7 @@ import sys
 
 from seedrecover.wordlist import Wordlist
 from seedrecover.order import iterate
-from seedrecover.keyderiv import seed2stakeaddress, ChecksumError
+from seedrecover.keyderiv import seed_to_stakeaddress, ChecksumError
 from seedrecover.stakecheck import StakeAddresses
 from seedrecover.bfstakecheck import BlockFrost, InactiveError
 
@@ -114,7 +114,7 @@ def main() -> None:
                                length, missing_positions):
         total_seed_phrases += 1
         try:
-            stake_address = seed2stakeaddress(seed_phrase, wordlist)
+            stake_address = seed_to_stakeaddress(seed_phrase, wordlist)
         except ChecksumError:
             continue
         checksum_seed_phrases += 1
