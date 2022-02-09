@@ -1,4 +1,4 @@
-"""Test for active stake keys through BlockFrost API.
+"""Test for active stake addresses through BlockFrost API.
 
 In order to use the BlockFrost API, an API key is needed that can be
 obtained at blockfrost.io.
@@ -11,27 +11,27 @@ root of our project (not shared in the git repository):
 ...     for line in f:
 ...         api_key = line.strip()
 
-With a valid API key, we can initialise the API and query stake keys for
+With a valid API key, we can initialise the API and query stake addresses for
 existence:
 >>> bf = BlockFrost(api_key)
 >>> existing = "stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq"
 >>> missing = "stake1u8p6x7049w05z8y2wqwfrdx04dzupzkye68qkv9zcec3dwqd9tweh"
->>> bf.check_stake_key(existing)
+>>> bf.check_stake_address(existing)
 True
->>> bf.check_stake_key(missing)
+>>> bf.check_stake_address(missing)
 False
 
 With an invalid API key, the health query is still possible, but subsequent
 queries fail:
 >>> bf = BlockFrost("mainnetABCDEFGH")
->>> bf.check_stake_key(existing)
+>>> bf.check_stake_address(existing)
 Traceback (most recent call last):
     ...
-bfkeycheck.InactiveError: Invalid BlockFrost API key!
->>> bf.check_stake_key(missing)
+bfstakecheck.InactiveError: Invalid BlockFrost API key!
+>>> bf.check_stake_address(missing)
 Traceback (most recent call last):
     ...
-bfkeycheck.InactiveError: Invalid BlockFrost API key!
+bfstakecheck.InactiveError: Invalid BlockFrost API key!
 
 The wrapper prevents subsequent calls to the API if one call has failed due
 to invalid key, request limit, or server errors.
@@ -67,13 +67,13 @@ class BlockFrost:
             if self._inactive:
                 raise InactiveError(self._inactive)
 
-    def check_stake_key(self, stake_key: str) -> bool:
-        """Check if the stake key has been active on the blockchain."""
+    def check_stake_address(self, stake_address: str) -> bool:
+        """Check if the stake address has been active on the blockchain."""
         if self._inactive:
             raise InactiveError(self._inactive)
         found = True
         try:
-            self._blockfrost_api.account_addresses_total(stake_key)
+            self._blockfrost_api.account_addresses_total(stake_address)
         except ApiError as e:
             if e.status_code == 400:
                 raise e

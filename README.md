@@ -58,7 +58,7 @@ script.
 ```
 usage: seedrecover [-h] [-w FILE] [-s EDIT DISTANCE] [-o]
                    [-l LENGTH] [-m POSITION [POSITION ...]]
-                   [-k STAKE KEY [STAKE KEY ...]] [-b API KEY]
+                   [-a ADDRESS [ADDRESS ...]] [-b API KEY]
                    [WORD ...]
 
 positional arguments:
@@ -75,8 +75,8 @@ options:
                         length of seed phrase
   -m POSITION [POSITION ...], --missing POSITION [POSITION ...]
                         missing word positions
-  -k STAKE KEY [STAKE KEY ...], --key STAKE KEY [STAKE KEY ...]
-                        check for stake keys
+  -a ADDRESS [ADDRESS ...], --address ADDRESS [ADDRESS ...]
+                        check for stake addresses
   -b API KEY, --blockfrost API KEY
                         check on BlockFrost
 ```
@@ -94,7 +94,7 @@ else     second   enter    addict   mystery  valve
 riot     attitude area     blind    fabric   symbol
 skill    sunset   goose    shock    gasp     grape
 ```
-The stake key for this test wallet is
+The stake address for this test wallet is
 `stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq`.
 
 The simplest way to get something wrong are just small typos, some of which
@@ -118,20 +118,20 @@ $ seedrecover -m 1 24 ladder long kangaroo inherit unknown prize else \
 
 If you do not know, at which position a word is missing (or if several
 words are missing), the possibilities become too many to manually check.
-With `-k`/`--key`, we can give one or several stake keys to search for
-(as usual on Unix systems, the list of options can be terminated with `--`
-to start with the known words of the seed phrase):
+With `-a`/`--address`, we can give one or several stake addresses to search
+for (as usual on Unix systems, the list of options can be terminated with
+`--` to start with the known words of the seed phrase):
 ```
-$ seedrecover -k stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq \
+$ seedrecover -a stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq \
   stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n -- ladder long \
   kangaroo inherit unknown prize else second enter mystery valve riot \
   attitude area blind fabric symbol skill sunset goose shock gasp grape
 ```
 
-It is also possible to abbreviate the searched stake key(s) by `...` in the
-middle:
+It is also possible to abbreviate the searched stake address(es) by `...` in
+the middle:
 ```
-$ seedrecover -k stake1u9...24r8yq stake1u9...calg0n -- ladder long \
+$ seedrecover -a stake1u9...24r8yq stake1u9...calg0n -- ladder long \
   kangaroo inherit unknown prize else second enter mystery valve riot \
   attitude area blind fabric symbol skill sunset goose shock gasp grape
 ```
@@ -145,8 +145,8 @@ $ seedrecover -o -k stake1u9...24r8yq stake1u9...calg0n -- ladder else riot \
   addict blind shock unknown mystery fabric gasp prize valve symbol grape
 ```
 
-If the searched stake key is unknown, the stake keys can be checked via
-[BlockFrost](https://blockfrost.io/) for previous activity.
+If the searched stake address is unknown, the stake addresses can be checked
+via [BlockFrost](https://blockfrost.io/) for previous activity.
 For this, an API key has to be given with the `-b`/`--blockfrost` option
 (can be obtained on the given website):
 ```

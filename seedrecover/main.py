@@ -1,8 +1,8 @@
 """Command line interface including input and output.
 
-TODO keyderiv.py: stake key from entropy
+TODO keyderiv.py: stake key from master key
 
-TODO keycheck.py: Check for plausible structure of given keys
+TODO stakecheck.py: Check for plausible structure of given addresses
 TODO order.py: Avoid repetitions of same seed phrases
 TODO Byron, Ledger, and Trezor support
 TODO Multi-account support
@@ -12,9 +12,9 @@ import sys
 
 from seedrecover.wordlist import Wordlist
 from seedrecover.order import iterate
-from seedrecover.keyderiv import seed2stakekey, ChecksumError
-from seedrecover.keycheck import StakeKeys
-from seedrecover.bfkeycheck import BlockFrost, InactiveError
+from seedrecover.keyderiv import seed2stakeaddress, ChecksumError
+from seedrecover.stakecheck import StakeAddresses
+from seedrecover.bfstakecheck import BlockFrost, InactiveError
 
 from typing import Optional
 
@@ -36,8 +36,9 @@ def parse_args() -> argparse.Namespace:
                         help="length of seed phrase", metavar="LENGTH")
     parser.add_argument("-m", "--missing", type=int, nargs="+", default=[],
                         help="missing word positions", metavar="POSITION")
-    parser.add_argument("-k", "--key", nargs="+", default=[],
-                        help="check for stake keys", metavar="STAKE KEY")
+    parser.add_argument("-a", "--address", nargs="+", default=[],
+                        help="check for stake addresses",
+                        metavar="ADDRESS")
     parser.add_argument("-b", "--blockfrost",
                         help="check on BlockFrost", metavar="API KEY")
     return parser.parse_args()
@@ -95,9 +96,9 @@ def main() -> None:
     length = get_length(args.length, len(seed))
     missing_positions = get_missing_positions(args.missing, length,
                                               length - len(seed))
-    sk = None
+    sc = None
     if args.key:
-        sk = StakeKeys(args.key)
+        sc = StakeAddresses(args.address)
     bf = None
     if args.blockfrost:
         try:
@@ -113,37 +114,37 @@ def main() -> None:
                                length, missing_positions):
         total_seed_phrases += 1
         try:
-            stake_key = seed2stakekey(seed_phrase, wordlist)
+            stake_address = seed2stakeaddress(seed_phrase, wordlist)
         except ChecksumError:
             continue
         checksum_seed_phrases += 1
-        if stake_key in already_checked:
+        if stake_address in already_checked:
             continue
-        already_checked.add(stake_key)
+        already_checked.add(stake_address)
         norepeat_seed_phrases += 1
         searched = False
         active = False
         verbose = True
-        if sk:
-            if sk.check_stake_key(stake_key):
+        if sc:
+            if sc.check_stake_address(stake_address):
                 searched = True
             verbose = False
         if bf:
             try:
-                if bf.check_stake_key(stake_key):
+                if bf.check_stake_address(stake_address):
                     active = True
                 verbose = False
             except InactiveError as e:
                 print(e, file=sys.stderr)
                 bf = None
         if searched and active:
-            print("Searched and active stake key found:")
+            print("Searched and active stake address found:")
         elif searched:
-            print("Searched stake key found:")
+            print("Searched stake address found:")
         elif active:
-            print("Active stake key found:")
+            print("Active stake address found:")
         if searched or active or verbose:
-            print(f"{stake_key}: {' '.join(seed_phrase)}")
+            print(f"{stake_address}: {' '.join(seed_phrase)}")
     print(f"{total_seed_phrases:10_} seed phrases checked.", file=sys.stderr)
     print(f"{checksum_seed_phrases:10_} fulfilled checksum.", file=sys.stderr)
     print(f"{norepeat_seed_phrases:10_} without repetitions.", file=sys.stderr)
