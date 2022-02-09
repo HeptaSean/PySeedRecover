@@ -1,6 +1,24 @@
 """Cardano key derivation from seed phrases.
 
+The derivation of a stake address from a seed phrase is implemented step-wise
+by first deriving an entropy from the seed phrase, deriving a master key from
+the entropy, a stake key from the master key, and finally encoding the hash
+of the stake key with BECH32.
+
+The whole process is done by seed_to_stakeaddress:
 >>> wordlist = Wordlist()
+>>> seed_to_stakeaddress(["ladder", "long", "kangaroo", "inherit", "unknown",
+...                       "prize", "else", "second", "enter", "addict",
+...                       "mystery", "valve", "riot", "attitude", "area",
+...                       "blind", "fabric", "symbol", "skill", "sunset",
+...                       "goose", "shock", "gasp", "grape"], wordlist)
+'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
+>>> seed_to_stakeaddress(["ladder", "long", "kangaroo", "inherit", "unknown",
+...                       "prize", "else", "second", "enter", "addict",
+...                       "mystery", "valve", "riot", "attitude", "area",
+...                       "blind", "fabric", "symbol", "skill", "sunset",
+...                       "goose", "shock", "gasp", "uphold"], wordlist)
+'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
 """
 import hashlib
 
@@ -18,7 +36,7 @@ class ChecksumError(Exception):
 def seed_to_entropy(seed: Iterable[str], wordlist: Wordlist) -> bytes:
     """Derive entropy from seed phrase.
 
-    Algorithm is described in:
+    Algorithm is specified in BIP-0039:
     https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
 
     >>> wordlist = Wordlist()
@@ -31,7 +49,7 @@ def seed_to_entropy(seed: Iterable[str], wordlist: Wordlist) -> bytes:
         ...
     keyderiv.ChecksumError
 
-    Test vectors linked in the BIP:
+    Test vectors linked in BIP-0039:
     >>> seed_to_entropy(["abandon", "abandon", "abandon", "abandon", "abandon",
     ...                  "abandon", "abandon", "abandon", "abandon", "abandon",
     ...                  "abandon", "about"], wordlist).hex()
@@ -49,7 +67,7 @@ def seed_to_entropy(seed: Iterable[str], wordlist: Wordlist) -> bytes:
     ...                  "zoo", "wrong"], wordlist).hex()
     'ffffffffffffffffffffffffffffffff'
 
-    Test vector for master key derivation (see entropy2masterkey):
+    Test vector for master key derivation (see entropy_to_masterkey):
     >>> seed_to_entropy(["eight", "country", "switch", "draw", "meat",
     ...                  "scout", "mystery", "blade", "tip", "drift",
     ...                  "useless", "good", "keep", "usage", "title"],
@@ -61,15 +79,13 @@ def seed_to_entropy(seed: Iterable[str], wordlist: Wordlist) -> bytes:
     ...                  "prize", "else", "second", "enter", "addict",
     ...                  "mystery", "valve", "riot", "attitude", "area",
     ...                  "blind", "fabric", "symbol", "skill", "sunset",
-    ...                  "goose", "shock", "gasp", "grape"],
-    ...                 wordlist).hex()
+    ...                  "goose", "shock", "gasp", "grape"], wordlist).hex()
     '7c7079e639eedf56920e134b606a49f88ba21d42d0be517b8f29ecc6498c980b'
     >>> seed_to_entropy(["ladder", "long", "kangaroo", "inherit", "unknown",
     ...                  "prize", "else", "second", "enter", "addict",
     ...                  "mystery", "valve", "riot", "attitude", "area",
     ...                  "blind", "fabric", "symbol", "skill", "sunset",
-    ...                  "goose", "shock", "gasp", "uphold"],
-    ...                 wordlist).hex()
+    ...                  "goose", "shock", "gasp", "uphold"], wordlist).hex()
     '7c7079e639eedf56920e134b606a49f88ba21d42d0be517b8f29ecc6498c980f'
     """
     entropy = bytearray()
@@ -97,12 +113,12 @@ def seed_to_entropy(seed: Iterable[str], wordlist: Wordlist) -> bytes:
 def entropy_to_masterkey(entropy: bytes) -> bytes:
     """Derive master key from entropy.
 
-    Algorithm is described in:
+    Algorithm is specified in:
     https://github.com/cardano-foundation/CIPs/blob/master/CIP-0003/Icarus.md
 
-    Test vector from the CIP:
+    Test vector from CIP-0003:
     >>> e = bytes.fromhex('46e62370a138a182a498b8e2885bc032379ddf38')
-    >>> entropy_to_masterkey(e).hex()  # doctest: +NORMALIZE_WHITESPACE
+    >>> entropy_to_masterkey(e).hex()
     'c065afd2832cd8b087c4d9ab7011f481ee1e0721e78ea5dd609f3ab3f156d245d176bd\
 8fd4ec60b4731c3918a2a72a0226c0cd119ec35b47e4d55884667f552a23f7fdcd4a10c6cd2\
 c7393ac61d877873e248f417634aa3d812af327ffe9d620'
@@ -110,13 +126,13 @@ c7393ac61d877873e248f417634aa3d812af327ffe9d620'
     Test wallets of PySeedRecover:
     >>> e = bytes.fromhex('7c7079e639eedf56920e134b606a49f8'
     ...                   '8ba21d42d0be517b8f29ecc6498c980b')
-    >>> entropy_to_masterkey(e).hex()  # doctest: +NORMALIZE_WHITESPACE
+    >>> entropy_to_masterkey(e).hex()
     '00d370bf9e756fba12e7fa389a3551b97558b140267c88166136d4f0d2bea75c393f5e\
 3e63e61578342fa8ab1313a7315693c5e679e3cf79f7fe8f13bf8ffe9c2a67ac173bbb2afd3\
 4381905fa247c65c0d8eb66c42d2373d54bd5eef73e49da'
     >>> e = bytes.fromhex('7c7079e639eedf56920e134b606a49f8'
     ...                   '8ba21d42d0be517b8f29ecc6498c980f')
-    >>> entropy_to_masterkey(e).hex()  # doctest: +NORMALIZE_WHITESPACE
+    >>> entropy_to_masterkey(e).hex()
     'b03595d980ab77fac0d95d0e563de43ad2978b2a22e8f0a14ad69a1964eddf5ed13ffc\
 0e596edf974cb477cb08c5fc499efbaafa5103a2afa6094468759c1d1c694734296dd915dd1\
 61df3703a3c1e0b4562fad0b67fdbf3fa7b819791cc5cac'
@@ -131,20 +147,70 @@ c7393ac61d877873e248f417634aa3d812af327ffe9d620'
 def masterkey_to_stakekey(masterkey: bytes) -> bytes:
     """Derive stake key from master key.
 
+    Test wallets of PySeedRecover:
+    >>> m = bytes.fromhex('00d370bf9e756fba12e7fa389a3551b97558b140267c8816'
+    ...                   '6136d4f0d2bea75c393f5e3e63e61578342fa8ab1313a731'
+    ...                   '5693c5e679e3cf79f7fe8f13bf8ffe9c2a67ac173bbb2afd'
+    ...                   '34381905fa247c65c0d8eb66c42d2373d54bd5eef73e49da')
+    >>> masterkey_to_stakekey(m).hex()
+    ''
+    >>> m = bytes.fromhex('b03595d980ab77fac0d95d0e563de43ad2978b2a22e8f0a1'
+    ...                   '4ad69a1964eddf5ed13ffc0e596edf974cb477cb08c5fc49'
+    ...                   '9efbaafa5103a2afa6094468759c1d1c694734296dd915dd'
+    ...                   '161df3703a3c1e0b4562fad0b67fdbf3fa7b819791cc5cac')
+    >>> masterkey_to_stakekey(m).hex()
+    ''
     """
+    return b''
+
+
+class BECH32FormatError(Exception):
+    """Raised if a requirement for BECH32 is not fulfilled."""
+
+    pass
 
 
 BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
+BECH32_GENERATOR = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
 
 
 def bech32_encode(readable: str, data: bytes) -> str:
     """Encode data with BECH32 using given human-readable part.
 
-    Algorithm is described in:
+    Algorithm is specified in:
     https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
     Reference implementation is given in:
     https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py
 
+    Valid test vectors from BIP-0173:
+    >>> bech32_encode('a', b'')
+    'a12uel5l'
+    >>> bech32_encode('abcdef', bytes.fromhex('00443214c74254b635cf'
+    ...                                       '84653a56d7c675be77df'))
+    'abcdef1qpzry9x8gf2tvdw0s3jn54khce6mua7lmqqqxw'
+    >>> bech32_encode('split', bytes.fromhex('c5f38b70305f519bf66d85fb6cf030'
+    ...                                      '58f3dde463ecd7918f2dc743918f2d'))
+    'split1checkupstagehandshakeupstreamerranterredcaperred2y9e3w'
+
+    Invalid test vectors from BIP-0173:
+    >>> bech32_encode('', b'')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Readable part is empty.
+    >>> bech32_encode(chr(0x20), b'')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+    >>> bech32_encode(chr(0x7F), b'')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+    >>> bech32_encode(chr(0x80), b'')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+
+    Test wallets of PySeedRecover:
     >>> data = bytes([0b11100001])
     >>> data += bytes.fromhex('56fab56e0aed4f7b59ff25a1f08d'
     ...                       'f1d56d6a619a6945b461d358e98a')
@@ -156,8 +222,12 @@ def bech32_encode(readable: str, data: bytes) -> str:
     >>> bech32_encode('stake', data)
     'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
     """
-    # TODO Check readable for ASCII
-    # TODO More tests from the BIP
+    # Check format of human-readable part:
+    if not readable:
+        raise BECH32FormatError("Readable part is empty.")
+    if any(ord(char) < 33 or ord(char) > 126 for char in readable):
+        raise BECH32FormatError("Invalid character in readable part.")
+    # Recode bytes into 5-bit integers:
     data_int5 = []
     bits = 0
     current = 0
@@ -172,18 +242,19 @@ def bech32_encode(readable: str, data: bytes) -> str:
     if bits:
         int5 = current << (5 - bits)
         data_int5.append(int5)
+    # Calculate checksum:
     to_check = [ord(char) >> 5 for char in readable] + [0]
     to_check += [ord(char) & 31 for char in readable]
     to_check += data_int5
     to_check += [0, 0, 0, 0, 0, 0]
-    generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
     checksum = 1
     for int5 in to_check:
         top = checksum >> 25
         checksum = (checksum & 0x1ffffff) << 5 ^ int5
         for i in range(5):
-            checksum ^= generator[i] if ((top >> i) & 1) else 0
+            checksum ^= BECH32_GENERATOR[i] if ((top >> i) & 1) else 0
     checksum ^= 1
+    # Compose and encode 5-bit integers into characters:
     data_int5 += [(checksum >> 5 * (5 - i)) & 31 for i in range(6)]
     bech32 = readable + '1'
     bech32 += ''.join([BECH32_CHARSET[int5] for int5 in data_int5])
@@ -193,11 +264,110 @@ def bech32_encode(readable: str, data: bytes) -> str:
 def bech32_decode(bech32: str) -> Tuple[str, bytes]:
     """Decode BECH32 string into human-readable part and data.
 
-    Algorithm is described in:
+    Algorithm is specified in:
     https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
     Reference implementation is given in:
     https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py
 
+    Valid test vectors from BIP-0173:
+    >>> readable, data = bech32_decode('A12UEL5L')
+    >>> readable
+    'a'
+    >>> data.hex()
+    ''
+    >>> readable, data = bech32_decode('a12uel5l')
+    >>> readable
+    'a'
+    >>> data.hex()
+    ''
+    >>> readable, data = bech32_decode('an83characterlonghumanreadable'
+    ...                                'partthatcontainsthenumber1and'
+    ...                                'theexcludedcharactersbio1tt5tgs')
+    >>> readable
+    'an83characterlonghumanreadablepartthatcontainsthenumber1andtheexcluded\
+charactersbio'
+    >>> data.hex()
+    ''
+    >>> readable, data = bech32_decode('abcdef1qpzry9x8gf2tvdw0'
+    ...                                's3jn54khce6mua7lmqqqxw')
+    >>> readable
+    'abcdef'
+    >>> data.hex()
+    '00443214c74254b635cf84653a56d7c675be77df'
+    >>> readable, data = bech32_decode('11qqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+    ...                                'qqqqqqqqqqqqqqqqqqqqqqqqqqqqqq'
+    ...                                'qqqqqqqqqqqqqqqqqqqqqqqqc8247j')
+    >>> readable
+    '1'
+    >>> data.hex()
+    '0000000000000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000'
+    >>> readable, data = bech32_decode('split1checkupstagehandshakeupstream'
+    ...                                'erranterredcaperred2y9e3w')
+    >>> readable
+    'split'
+    >>> data.hex()
+    'c5f38b70305f519bf66d85fb6cf03058f3dde463ecd7918f2dc743918f2d'
+    >>> readable, data = bech32_decode('?1ezyfcl')
+    >>> readable
+    '?'
+    >>> data.hex()
+    ''
+
+    Invalid mix of uppercase and lowercase:
+    >>> readable, data = bech32_decode('aBcDeF1qPzRy9x8gF2TvDw0'
+    ...                                's3jN54KhCe6mUa7lMqQqXw')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: BECH32 string mixes uppercase and lowercase.
+
+    Invalid test vectors from BIP-0173:
+    >>> readable, data = bech32_decode(chr(0x20) + '1nwldj5')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+    >>> readable, data = bech32_decode(chr(0x7F) + '1axkwrx')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+    >>> readable, data = bech32_decode(chr(0x80) + '1eym55h')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in readable part.
+    >>> readable, data = bech32_decode('pzry9x0s0muk')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: BECH32 string has no separator ('1').
+    >>> readable, data = bech32_decode('1pzry9x0s0muk')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Readable part is empty.
+    >>> readable, data = bech32_decode('x1b4n0q5v')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in data part.
+    >>> readable, data = bech32_decode('li1dgmt3')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Data part is too short.
+    >>> readable, data = bech32_decode('de1lg7wt' + chr(0xFF))
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Invalid character in data part.
+    >>> readable, data = bech32_decode('A1G7SGD8')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Checksum of BECH32 string does not match.
+    >>> readable, data = bech32_decode('10a06t8')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Readable part is empty.
+    >>> readable, data = bech32_decode('1qzzfhee')
+    Traceback (most recent call last):
+        ...
+    keyderiv.BECH32FormatError: Readable part is empty.
+
+    Test wallets of PySeedRecover:
     >>> bech32 = 'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
     >>> readable, data = bech32_decode(bech32)
     >>> readable
@@ -215,22 +385,36 @@ def bech32_decode(bech32: str) -> Tuple[str, bytes]:
     >>> data[1:].hex()
     '59b8841a4c7b4b919ca88ef9132be58ee596cc6b3553f7477d4577b2'
     """
-    # TODO Format checks: all lower xor all upper, all ASCII, ...
-    # TODO More tests from the BIP
+    # Check format, divide human-readable and data part
+    # and decode characters to 5-bit integers:
+    if not bech32 == bech32.lower() and not bech32 == bech32.upper():
+        raise BECH32FormatError("BECH32 string mixes uppercase and lowercase.")
+    bech32 = bech32.lower()
+    if '1' not in bech32:
+        raise BECH32FormatError("BECH32 string has no separator ('1').")
     readable, _, data_string = bech32.rpartition('1')
-    data_int5 = [BECH32_CHARSET.find(char) for char in data_string.lower()]
+    if not readable:
+        raise BECH32FormatError("Readable part is empty.")
+    if any(ord(char) < 33 or ord(char) > 126 for char in readable):
+        raise BECH32FormatError("Invalid character in readable part.")
+    if len(data_string) < 6:
+        raise BECH32FormatError("Data part is too short.")
+    if any(char not in BECH32_CHARSET for char in data_string):
+        raise BECH32FormatError("Invalid character in data part.")
+    data_int5 = [BECH32_CHARSET.find(char) for char in data_string]
+    # Calculate checksum:
     to_check = [ord(char) >> 5 for char in readable] + [0]
     to_check += [ord(char) & 31 for char in readable]
     to_check += data_int5
-    generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
     checksum = 1
     for int5 in to_check:
         top = checksum >> 25
         checksum = (checksum & 0x1ffffff) << 5 ^ int5
         for i in range(5):
-            checksum ^= generator[i] if ((top >> i) & 1) else 0
+            checksum ^= BECH32_GENERATOR[i] if ((top >> i) & 1) else 0
     if checksum != 1:
-        raise ChecksumError
+        raise BECH32FormatError("Checksum of BECH32 string does not match.")
+    # Recode 5-bit integers into bytes:
     data = bytearray()
     bits = 0
     current = 0
@@ -249,22 +433,23 @@ def generate_shelley_address(payment_key: Optional[bytes],
                              stake_key: Optional[bytes]) -> str:
     """Generate Cardano Shelley addresses from keys.
 
-    Algorithm is defined in:
+    Algorithm is specified in:
     https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019
 
+    Test vectors of CIP-0019:
     >>> _, payment_key = bech32_decode('addr_vk1w0l2sr2zgfm26ztc6nl9xy8gh'
     ...                                'sk5sh6ldwemlpmp9xylzy4dtf7st80zhd')
     >>> _, stake_key = bech32_decode('stake_vk1px4j0r2fk7ux5p23shz8f3y5y'
     ...                              '2qam7s954rgf3lg5merqcj6aetsft99wu')
     >>> generate_shelley_address(payment_key,
-    ...                          stake_key)  # doctest: +NORMALIZE_WHITESPACE
+    ...                          stake_key)
     'addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktc\
 d8cc3sq835lu7drv2xwl2wywfgse35a3x'
     >>> generate_shelley_address(payment_key,
-    ...                          None)  # doctest: +NORMALIZE_WHITESPACE
+    ...                          None)
     'addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8'
     >>> generate_shelley_address(None,
-    ...                          stake_key)  # doctest: +NORMALIZE_WHITESPACE
+    ...                          stake_key)
     'stake1uyehkck0lajq8gr28t9uxnuvgcqrc6070x3k9r8048z8y5gh6ffgw'
     >>> generate_shelley_address(None, None)
     Traceback (most recent call last):
