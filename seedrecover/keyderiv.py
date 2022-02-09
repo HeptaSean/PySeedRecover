@@ -6,11 +6,11 @@ import hashlib
 
 from seedrecover.wordlist import Wordlist
 
-from typing import Iterable
+from typing import Iterable, Optional, Tuple
 
 
 class ChecksumError(Exception):
-    """Raised if checksum of seed phrase is not correct."""
+    """Raised if checksum is not correct."""
 
     pass
 
@@ -134,12 +134,169 @@ def masterkey2stakekey(masterkey: bytes) -> bytes:
     """
 
 
-def stakekey2bech32(stakekey: bytes) -> str:
-    """Encode stake key in BECH32.
+BECH32_CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l"
 
+
+def bech32encode(readable: str, data: bytes) -> str:
+    """Encode data with BECH32 using given human-readable part.
+
+    Algorithm is described in:
+    https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+    Reference implementation is given in:
+    https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py
+
+    >>> data = bytes([0b11100001])
+    >>> data += bytes.fromhex('56fab56e0aed4f7b59ff25a1f08d'
+    ...                       'f1d56d6a619a6945b461d358e98a')
+    >>> bech32encode('stake', data)
+    'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
+    >>> data = bytes([0b11100001])
+    >>> data += bytes.fromhex('59b8841a4c7b4b919ca88ef9132b'
+    ...                       'e58ee596cc6b3553f7477d4577b2')
+    >>> bech32encode('stake', data)
+    'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
     """
+    # TODO Check readable for ASCII
+    # TODO More tests from the BIP
+    data_int5 = []
+    bits = 0
+    current = 0
+    for byte in data:
+        bits += 8
+        current = (current << 8) + byte
+        while bits >= 5:
+            bits -= 5
+            int5 = current >> bits
+            data_int5.append(int5)
+            current -= int5 << bits
+    if bits:
+        int5 = current << (5 - bits)
+        data_int5.append(int5)
+    to_check = [ord(char) >> 5 for char in readable] + [0]
+    to_check += [ord(char) & 31 for char in readable]
+    to_check += data_int5
+    to_check += [0, 0, 0, 0, 0, 0]
+    generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+    checksum = 1
+    for int5 in to_check:
+        top = checksum >> 25
+        checksum = (checksum & 0x1ffffff) << 5 ^ int5
+        for i in range(5):
+            checksum ^= generator[i] if ((top >> i) & 1) else 0
+    checksum ^= 1
+    data_int5 += [(checksum >> 5 * (5 - i)) & 31 for i in range(6)]
+    bech32 = readable + '1'
+    bech32 += ''.join([BECH32_CHARSET[int5] for int5 in data_int5])
+    return bech32
 
 
-def seed2stakekey(seed: Iterable[str], wordlist: Wordlist) -> str:
+def bech32decode(bech32: str) -> Tuple[str, bytes]:
+    """Decode BECH32 string into human-readable part and data.
+
+    Algorithm is described in:
+    https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
+    Reference implementation is given in:
+    https://github.com/sipa/bech32/blob/master/ref/python/segwit_addr.py
+
+    >>> bech32 = 'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
+    >>> readable, data = bech32decode(bech32)
+    >>> readable
+    'stake'
+    >>> bin(data[0])
+    '0b11100001'
+    >>> data[1:].hex()
+    '56fab56e0aed4f7b59ff25a1f08df1d56d6a619a6945b461d358e98a'
+    >>> bech32 = 'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
+    >>> readable, data = bech32decode(bech32)
+    >>> readable
+    'stake'
+    >>> bin(data[0])
+    '0b11100001'
+    >>> data[1:].hex()
+    '59b8841a4c7b4b919ca88ef9132be58ee596cc6b3553f7477d4577b2'
+    """
+    # TODO Format checks: all lower xor all upper, all ASCII, ...
+    # TODO More tests from the BIP
+    readable, _, data_string = bech32.rpartition('1')
+    data_int5 = [BECH32_CHARSET.find(char) for char in data_string.lower()]
+    to_check = [ord(char) >> 5 for char in readable] + [0]
+    to_check += [ord(char) & 31 for char in readable]
+    to_check += data_int5
+    generator = [0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3]
+    checksum = 1
+    for int5 in to_check:
+        top = checksum >> 25
+        checksum = (checksum & 0x1ffffff) << 5 ^ int5
+        for i in range(5):
+            checksum ^= generator[i] if ((top >> i) & 1) else 0
+    if checksum != 1:
+        raise ChecksumError
+    data = bytearray()
+    bits = 0
+    current = 0
+    for int5 in data_int5[:-6]:
+        bits += 5
+        current = (current << 5) + int5
+        while bits >= 8:
+            bits -= 8
+            byte = current >> bits
+            data.append(byte)
+            current -= byte << bits
+    return readable, data
+
+
+def generate_shelley_address(payment_key: Optional[bytes],
+                             stake_key: Optional[bytes]) -> str:
+    """Generate Cardano Shelley addresses from keys.
+
+    Algorithm is defined in:
+    https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019
+
+    >>> _, payment_key = bech32decode('addr_vk1w0l2sr2zgfm26ztc6nl9xy8gh'
+    ...                               'sk5sh6ldwemlpmp9xylzy4dtf7st80zhd')
+    >>> _, stake_key = bech32decode('stake_vk1px4j0r2fk7ux5p23shz8f3y5y'
+    ...                             '2qam7s954rgf3lg5merqcj6aetsft99wu')
+    >>> generate_shelley_address(payment_key,
+    ...                          stake_key)  # doctest: +NORMALIZE_WHITESPACE
+    'addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktc\
+d8cc3sq835lu7drv2xwl2wywfgse35a3x'
+    >>> generate_shelley_address(payment_key,
+    ...                          None)  # doctest: +NORMALIZE_WHITESPACE
+    'addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8'
+    >>> generate_shelley_address(None,
+    ...                          stake_key)  # doctest: +NORMALIZE_WHITESPACE
+    'stake1uyehkck0lajq8gr28t9uxnuvgcqrc6070x3k9r8048z8y5gh6ffgw'
+    >>> generate_shelley_address(None, None)
+    Traceback (most recent call last):
+        ...
+    ValueError: At least one key required.
+    """
+    if payment_key is None:
+        if stake_key is None:
+            raise ValueError("At least one key required.")
+        else:
+            readable = 'stake'
+            stake_hash = hashlib.blake2b(stake_key, digest_size=28)
+            data = bytes([0b11100001])
+            data += stake_hash.digest()
+    else:
+        readable = 'addr'
+        payment_hash = hashlib.blake2b(payment_key, digest_size=28)
+        if stake_key is None:
+            data = bytes([0b01100001])
+            data += payment_hash.digest()
+        else:
+            stake_hash = hashlib.blake2b(stake_key, digest_size=28)
+            data = bytes([0b00000001])
+            data += payment_hash.digest()
+            data += stake_hash.digest()
+    return bech32encode(readable, data)
+
+
+def seed2stakeaddress(seed: Iterable[str], wordlist: Wordlist) -> str:
     """Derive stake key from seed phrase."""
-    return entropy2masterkey(seed2entropy(seed, wordlist)).hex()
+    entropy = seed2entropy(seed, wordlist)
+    master_key = entropy2masterkey(entropy)
+    stake_key = masterkey2stakekey(master_key)
+    stake_address = generate_shelley_address(None, stake_key)
+    return stake_address
