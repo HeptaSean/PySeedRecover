@@ -18,9 +18,11 @@ The whole process is done by seed_to_stakeaddress:
 ...                       "mystery", "valve", "riot", "attitude", "area",
 ...                       "blind", "fabric", "symbol", "skill", "sunset",
 ...                       "goose", "shock", "gasp", "uphold"], wordlist)
-'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
+'stake1u8p6x7049w05z8y2wqwfrdx04dzupzkye68qkv9zcec3dwqd9tweh'
 """
+import ecpy.curves  # type: ignore
 import hashlib
+import hmac
 
 from seedrecover.wordlist import Wordlist
 
@@ -144,7 +146,58 @@ c7393ac61d877873e248f417634aa3d812af327ffe9d620'
     return key
 
 
-def masterkey_to_stakekey(masterkey: bytes) -> bytes:
+ed25519 = ecpy.curves.Curve.get_curve("Ed25519")
+ed25519_n = 2**252 + 27742317777372353535851937790883648493
+
+
+def masterkey_to_rootkey(masterkey: bytes) -> Tuple[bytes, bytes, bytes]:
+    """Decompose masterkey and compute public key.
+
+    Decomposition of masterkey into k and c is given in:
+    https://github.com/cardano-foundation/CIPs/tree/master/CIP-0003
+    Derivation of A according to:
+    https://doi.org/10.1109/EuroSPW.2017.47
+    """
+    c = masterkey[64:]
+    k = masterkey[:64]
+    k_L = int.from_bytes(k[:32], 'little')
+    A = ed25519.encode_point(k_L * ed25519.generator)
+    return k, A, c
+
+
+def child_key(k_parent: bytes, A_parent: bytes, c_parent: bytes,
+              i: int) -> Tuple[bytes, bytes, bytes]:
+    """Derive child key from parent key.
+
+    Algorithm specified in:
+    https://doi.org/10.1109/EuroSPW.2017.47
+    Example implementation in:
+    https://github.com/LedgerHQ/orakolo/blob/master/src/python/orakolo/HDEd25519.py
+    """
+    index = i.to_bytes(4, 'little')
+    if i < 2**31:
+        Z = hmac.new(c_parent, b'\x02' + A_parent + index,
+                     hashlib.sha512).digest()
+        c = hmac.new(c_parent, b'\x03' + A_parent + index,
+                     hashlib.sha512).digest()[32:]
+    else:
+        Z = hmac.new(c_parent, b'\x00' + k_parent + index,
+                     hashlib.sha512).digest()
+        c = hmac.new(c_parent, b'\x01' + k_parent + index,
+                     hashlib.sha512).digest()[32:]
+    k_L = int.from_bytes(Z[:28], 'little') * 8
+    k_L += int.from_bytes(k_parent[:32], 'little')
+    if k_L % ed25519_n == 0:
+        raise ValueError("k_L is zero.")
+    k_R = int.from_bytes(Z[32:], 'little')
+    k_R += int.from_bytes(k_parent[32:], 'little')
+    k_R %= 2**256
+    k = k_L.to_bytes(32, 'little') + k_R.to_bytes(32, 'little')
+    A = ed25519.encode_point(k_L * ed25519.generator)
+    return k, A, c
+
+
+def masterkey_to_pubkey(masterkey: bytes, path: str) -> bytes:
     """Derive stake key from master key.
 
     Test wallets of PySeedRecover:
@@ -152,16 +205,23 @@ def masterkey_to_stakekey(masterkey: bytes) -> bytes:
     ...                   '6136d4f0d2bea75c393f5e3e63e61578342fa8ab1313a731'
     ...                   '5693c5e679e3cf79f7fe8f13bf8ffe9c2a67ac173bbb2afd'
     ...                   '34381905fa247c65c0d8eb66c42d2373d54bd5eef73e49da')
-    >>> masterkey_to_stakekey(m).hex()
-    ''
+    >>> masterkey_to_pubkey(m, "1852'/1815'/0'/2/0").hex()
+    '71bf7bfed46252ab6080e19391521a7af962b2b85f1a75c5e75ec0da7d665c99'
     >>> m = bytes.fromhex('b03595d980ab77fac0d95d0e563de43ad2978b2a22e8f0a1'
     ...                   '4ad69a1964eddf5ed13ffc0e596edf974cb477cb08c5fc49'
     ...                   '9efbaafa5103a2afa6094468759c1d1c694734296dd915dd'
     ...                   '161df3703a3c1e0b4562fad0b67fdbf3fa7b819791cc5cac')
-    >>> masterkey_to_stakekey(m).hex()
-    ''
+    >>> masterkey_to_pubkey(m, "1852'/1815'/0'/2/0").hex()
+    '9ec748e483ae666c99aaae21434f6c5f77bf40c3b44ea68a0eb6f48617a5aa9e'
     """
-    return b''
+    k, A, c = masterkey_to_rootkey(masterkey)
+    for component in path.split('/'):
+        if component.endswith("'"):
+            index = int(component[:-1]) + 2**31
+        else:
+            index = int(component)
+        k, A, c = child_key(k, A, c, index)
+    return A
 
 
 class BECH32FormatError(Exception):
@@ -217,10 +277,10 @@ def bech32_encode(readable: str, data: bytes) -> str:
     >>> bech32_encode('stake', data)
     'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
     >>> data = bytes([0b11100001])
-    >>> data += bytes.fromhex('59b8841a4c7b4b919ca88ef9132b'
-    ...                       'e58ee596cc6b3553f7477d4577b2')
+    >>> data += bytes.fromhex('c3a379f52b9f411c8a701c91b4cf'
+    ...                       'ab45c08ac4ce8e0b30a2c67116b8')
     >>> bech32_encode('stake', data)
-    'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
+    'stake1u8p6x7049w05z8y2wqwfrdx04dzupzkye68qkv9zcec3dwqd9tweh'
     """
     # Check format of human-readable part:
     if not readable:
@@ -376,14 +436,14 @@ charactersbio'
     '0b11100001'
     >>> data[1:].hex()
     '56fab56e0aed4f7b59ff25a1f08df1d56d6a619a6945b461d358e98a'
-    >>> bech32 = 'stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n'
+    >>> bech32 = 'stake1u8p6x7049w05z8y2wqwfrdx04dzupzkye68qkv9zcec3dwqd9tweh'
     >>> readable, data = bech32_decode(bech32)
     >>> readable
     'stake'
     >>> bin(data[0])
     '0b11100001'
     >>> data[1:].hex()
-    '59b8841a4c7b4b919ca88ef9132be58ee596cc6b3553f7477d4577b2'
+    'c3a379f52b9f411c8a701c91b4cfab45c08ac4ce8e0b30a2c67116b8'
     """
     # Check format, divide human-readable and data part
     # and decode characters to 5-bit integers:
@@ -441,20 +501,29 @@ def generate_shelley_address(payment_key: Optional[bytes],
     ...                                'sk5sh6ldwemlpmp9xylzy4dtf7st80zhd')
     >>> _, stake_key = bech32_decode('stake_vk1px4j0r2fk7ux5p23shz8f3y5y'
     ...                              '2qam7s954rgf3lg5merqcj6aetsft99wu')
-    >>> generate_shelley_address(payment_key,
-    ...                          stake_key)
+    >>> generate_shelley_address(payment_key, stake_key)
     'addr1qx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3n0d3vllmyqwsx5wktc\
 d8cc3sq835lu7drv2xwl2wywfgse35a3x'
-    >>> generate_shelley_address(payment_key,
-    ...                          None)
+    >>> generate_shelley_address(payment_key, None)
     'addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8'
-    >>> generate_shelley_address(None,
-    ...                          stake_key)
+    >>> generate_shelley_address(None, stake_key)
     'stake1uyehkck0lajq8gr28t9uxnuvgcqrc6070x3k9r8048z8y5gh6ffgw'
     >>> generate_shelley_address(None, None)
     Traceback (most recent call last):
         ...
     ValueError: At least one key required.
+
+    Test wallets of PySeedRecover:
+    >>> stake_key = bytes.fromhex('71bf7bfed46252ab6080e19391521a7a'
+    ...                           'f962b2b85f1a75c5e75ec0da7d665c99')
+    >>> generate_shelley_address(None,
+    ...                          stake_key)
+    'stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq'
+    >>> stake_key = bytes.fromhex('9ec748e483ae666c99aaae21434f6c5f'
+    ...                           '77bf40c3b44ea68a0eb6f48617a5aa9e')
+    >>> generate_shelley_address(None,
+    ...                          stake_key)
+    'stake1u8p6x7049w05z8y2wqwfrdx04dzupzkye68qkv9zcec3dwqd9tweh'
     """
     if payment_key is None:
         if stake_key is None:
@@ -482,6 +551,6 @@ def seed_to_stakeaddress(seed: Iterable[str], wordlist: Wordlist) -> str:
     """Derive stake key from seed phrase."""
     entropy = seed_to_entropy(seed, wordlist)
     master_key = entropy_to_masterkey(entropy)
-    stake_key = masterkey_to_stakekey(master_key)
+    stake_key = masterkey_to_pubkey(master_key, "1852'/1815'/0'/2/0")
     stake_address = generate_shelley_address(None, stake_key)
     return stake_address
