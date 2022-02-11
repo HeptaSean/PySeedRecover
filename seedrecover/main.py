@@ -1,8 +1,9 @@
 """Command line interface including input and output.
 
+TODO order.py: Start with reorder in the middle
+TODO order.py: Add exchange of adjacent positions to reorder?
 TODO stakecheck.py: Check for plausible structure of given addresses
 TODO order.py: Avoid repetitions of same seed phrases
-TODO order.py: More plausible reorderings?
 TODO Byron, Ledger, and Trezor support
 TODO Multi-account support
 """
@@ -111,16 +112,25 @@ def main() -> None:
     norepeat_seed_phrases = 0
     for seed_phrase in iterate(seed, args.order, wordlist,
                                length, missing_positions):
+        okay = True
         total_seed_phrases += 1
         try:
             stake_address = seed_to_stakeaddress(seed_phrase, wordlist)
         except ChecksumError:
+            okay = False
+        if okay:
+            checksum_seed_phrases += 1
+            if stake_address in already_checked:
+                okay = False
+            else:
+                already_checked.add(stake_address)
+                norepeat_seed_phrases += 1
+        print(f"Seed phrases checked: {total_seed_phrases:10_} total, "
+              f"{checksum_seed_phrases:10_} fulfilled checksum, "
+              f"{norepeat_seed_phrases:10_} without repetitions",
+              file=sys.stderr, end="\r")
+        if not okay:
             continue
-        checksum_seed_phrases += 1
-        if stake_address in already_checked:
-            continue
-        already_checked.add(stake_address)
-        norepeat_seed_phrases += 1
         searched = False
         active = False
         verbose = True
@@ -136,14 +146,13 @@ def main() -> None:
             except InactiveError as e:
                 print(e, file=sys.stderr)
                 bf = None
-        if searched and active:
-            print("Searched and active stake address found:")
-        elif searched:
-            print("Searched stake address found:")
-        elif active:
-            print("Active stake address found:")
         if searched or active or verbose:
+            print(file=sys.stderr)
+            if searched and active:
+                print("Searched and active stake address found:")
+            elif searched:
+                print("Searched stake address found:")
+            elif active:
+                print("Active stake address found:")
             print(f"{stake_address}: {' '.join(seed_phrase)}")
-    print(f"{total_seed_phrases:10_} seed phrases checked.", file=sys.stderr)
-    print(f"{checksum_seed_phrases:10_} fulfilled checksum.", file=sys.stderr)
-    print(f"{norepeat_seed_phrases:10_} without repetitions.", file=sys.stderr)
+    print(file=sys.stderr)
