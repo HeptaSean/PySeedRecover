@@ -1,7 +1,5 @@
 """Command line interface including input and output.
 
-TODO keyderiv.py: stake key from master key
-
 TODO stakecheck.py: Check for plausible structure of given addresses
 TODO order.py: Avoid repetitions of same seed phrases
 TODO Byron, Ledger, and Trezor support
@@ -16,7 +14,7 @@ from seedrecover.keyderiv import seed_to_stakeaddress, ChecksumError
 from seedrecover.stakecheck import StakeAddresses
 from seedrecover.bfstakecheck import BlockFrost, InactiveError
 
-from typing import Optional
+from typing import List, Optional
 
 
 def parse_args() -> argparse.Namespace:
@@ -44,8 +42,8 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def get_seed(wordlist: Wordlist, known: list[str],
-             similar: int) -> list[list[str]]:
+def get_seed(wordlist: Wordlist, known: List[str],
+             similar: int) -> List[List[str]]:
     """Determine possible seed words from given known words."""
     seed = []
     for word in known:
@@ -75,8 +73,8 @@ def get_length(length: Optional[int], known: int) -> int:
     return length
 
 
-def get_missing_positions(given: list[int], length: int,
-                          missing: int) -> list[int]:
+def get_missing_positions(given: List[int], length: int,
+                          missing: int) -> List[int]:
     """Check or determine positions for missing words."""
     missing_positions = [i-1 for i in given]
     if not missing_positions:
@@ -97,7 +95,7 @@ def main() -> None:
     missing_positions = get_missing_positions(args.missing, length,
                                               length - len(seed))
     sc = None
-    if args.key:
+    if args.address:
         sc = StakeAddresses(args.address)
     bf = None
     if args.blockfrost:

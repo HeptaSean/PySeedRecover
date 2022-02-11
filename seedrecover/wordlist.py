@@ -63,7 +63,7 @@ returned:
 """
 import pathlib
 
-from typing import Optional, Iterator
+from typing import Iterator, List, Optional
 
 
 def edit_distance(a: str, b: str) -> int:
@@ -124,7 +124,7 @@ class Wordlist:
         """Load wordlist from given file (or English if none given)."""
         if not filename:
             filename = str(pathlib.Path(__file__).parent/'english.txt')
-        self._words: list[str] = []
+        self._words: List[str] = []
         with open(filename) as wordlist_file:
             for line in wordlist_file:
                 word = line.strip()
@@ -146,7 +146,7 @@ class Wordlist:
         """Check if word is in list."""
         return word in self._words
 
-    def get_words(self, word: str, distance: int = 0) -> list[str]:
+    def get_words(self, word: str, distance: int = 0) -> List[str]:
         """Get words in list up to edit distance."""
         initial_words = []
         if word in self._words:

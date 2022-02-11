@@ -41,12 +41,12 @@ The iterate function can do all of the variations together.
  ['all1', 'thd1', 'scd1', 'fst2'], ['all2', 'thd1', 'scd1', 'fst2'],
  ['thd1', 'scd1', 'fst2', 'all1'], ['thd1', 'scd1', 'fst2', 'all2']]
 """
-from typing import TypeVar, Iterable, Iterator
+from typing import Iterable, Iterator, List, TypeVar
 
 X = TypeVar('X')
 
 
-def permute(lst: list[X]) -> Iterator[list[X]]:
+def permute(lst: List[X]) -> Iterator[List[X]]:
     """Permute the given list and yield all permutations.
 
     >>> list(permute([1, 2, 3]))
@@ -60,7 +60,7 @@ def permute(lst: list[X]) -> Iterator[list[X]]:
                 yield [lst[i]] + permutation
 
 
-def combine(lst: list[list[X]]) -> Iterator[list[X]]:
+def combine(lst: List[List[X]]) -> Iterator[List[X]]:
     """Combine elements from each of the sublists and yield all combinations.
 
     >>> list(combine([[1, 2, 3], [1], [1, 2]]))
@@ -74,8 +74,8 @@ def combine(lst: list[list[X]]) -> Iterator[list[X]]:
                 yield [first] + combination
 
 
-def extend(given: list[X], allx: Iterable[X], length: int,
-           positions: list[int]) -> Iterator[list[X]]:
+def extend(given: List[X], allx: Iterable[X], length: int,
+           positions: List[int]) -> Iterator[List[X]]:
     """Extend the given list at given positions with all possible elements.
 
     >>> list(extend([1, 2, 3, 4, 5], [8, 9],
@@ -102,8 +102,8 @@ def extend(given: list[X], allx: Iterable[X], length: int,
                     yield given[:position] + [x] + extension
 
 
-def iterate(given: list[list[X]], perm: bool, allx: Iterable[X],
-            length: int, positions: list[int]) -> Iterator[list[X]]:
+def iterate(given: List[List[X]], perm: bool, allx: Iterable[X],
+            length: int, positions: List[int]) -> Iterator[List[X]]:
     """Combine, permute, and extend the given data."""
     if perm:
         for permutation in permute(given):

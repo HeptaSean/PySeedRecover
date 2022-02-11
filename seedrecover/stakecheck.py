@@ -24,11 +24,13 @@ False
 """
 import re
 
+from typing import Iterable
+
 
 class StakeAddresses:
     """Test stake addresses against list of searched addresses."""
 
-    def __init__(self, addresses: list[str]) -> None:
+    def __init__(self, addresses: Iterable[str]) -> None:
         """Initialise list of searched addresses."""
         self._patterns = []
         for a in addresses:
