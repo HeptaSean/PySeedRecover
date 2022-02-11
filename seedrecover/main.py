@@ -2,6 +2,7 @@
 
 TODO stakecheck.py: Check for plausible structure of given addresses
 TODO order.py: Avoid repetitions of same seed phrases
+TODO order.py: More plausible reorderings?
 TODO Byron, Ledger, and Trezor support
 TODO Multi-account support
 """

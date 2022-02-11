@@ -2,7 +2,7 @@
 
 The iterate function can do all of the variations together.
 * The first argument is a list of lists of possible values for each position.
-* The second argument decides if permutations of the given values should be
+* The second argument decides if reorderings of the given values should be
   done.
 * The third argument is an iterable of all values to be tried in missing
   positions. The fourth arguments is the total target length and the fifth
@@ -23,23 +23,7 @@ The iterate function can do all of the variations together.
  ['all1', 'fst1', 'thd1', 'scd1'], ['all2', 'fst1', 'thd1', 'scd1'],
  ['fst1', 'thd1', 'scd1', 'all1'], ['fst1', 'thd1', 'scd1', 'all2'],
  ['all1', 'fst2', 'thd1', 'scd1'], ['all2', 'fst2', 'thd1', 'scd1'],
- ['fst2', 'thd1', 'scd1', 'all1'], ['fst2', 'thd1', 'scd1', 'all2'],
- ['all1', 'scd1', 'fst1', 'thd1'], ['all2', 'scd1', 'fst1', 'thd1'],
- ['scd1', 'fst1', 'thd1', 'all1'], ['scd1', 'fst1', 'thd1', 'all2'],
- ['all1', 'scd1', 'fst2', 'thd1'], ['all2', 'scd1', 'fst2', 'thd1'],
- ['scd1', 'fst2', 'thd1', 'all1'], ['scd1', 'fst2', 'thd1', 'all2'],
- ['all1', 'scd1', 'thd1', 'fst1'], ['all2', 'scd1', 'thd1', 'fst1'],
- ['scd1', 'thd1', 'fst1', 'all1'], ['scd1', 'thd1', 'fst1', 'all2'],
- ['all1', 'scd1', 'thd1', 'fst2'], ['all2', 'scd1', 'thd1', 'fst2'],
- ['scd1', 'thd1', 'fst2', 'all1'], ['scd1', 'thd1', 'fst2', 'all2'],
- ['all1', 'thd1', 'fst1', 'scd1'], ['all2', 'thd1', 'fst1', 'scd1'],
- ['thd1', 'fst1', 'scd1', 'all1'], ['thd1', 'fst1', 'scd1', 'all2'],
- ['all1', 'thd1', 'fst2', 'scd1'], ['all2', 'thd1', 'fst2', 'scd1'],
- ['thd1', 'fst2', 'scd1', 'all1'], ['thd1', 'fst2', 'scd1', 'all2'],
- ['all1', 'thd1', 'scd1', 'fst1'], ['all2', 'thd1', 'scd1', 'fst1'],
- ['thd1', 'scd1', 'fst1', 'all1'], ['thd1', 'scd1', 'fst1', 'all2'],
- ['all1', 'thd1', 'scd1', 'fst2'], ['all2', 'thd1', 'scd1', 'fst2'],
- ['thd1', 'scd1', 'fst2', 'all1'], ['thd1', 'scd1', 'fst2', 'all2']]
+ ['fst2', 'thd1', 'scd1', 'all1'], ['fst2', 'thd1', 'scd1', 'all2']]
 """
 from typing import Iterable, Iterator, List, TypeVar
 
@@ -58,6 +42,33 @@ def permute(lst: List[X]) -> Iterator[List[X]]:
         for i in range(len(lst)):
             for permutation in permute(lst[:i] + lst[i+1:]):
                 yield [lst[i]] + permutation
+
+
+def reorder(lst: List[X]) -> Iterator[List[X]]:
+    """Compute plausible reorderings of the given list and yield them.
+
+    We consider a reordering plausible if it always jumps to the n-th
+    element of the given list (representing confusion of rows and columns).
+    A list of [1, 2, 3, 4, 5, 6, 7] could have been read row-wise from:
+    1 2  or  1 2 3  or  1 2 3 4  or  1 2 3 4 5  or  1 2 3 4 5 6
+    3 4      4 5 6      5 6 7        6 7            7
+    5 6      7
+    7
+
+    Reading these arrangements column-wise leads to the following reorderings
+    with the original ordering first:
+    >>> list(reorder([1, 2, 3, 4, 5, 6, 7]))  # doctest: +NORMALIZE_WHITESPACE
+    [[1, 2, 3, 4, 5, 6, 7], [1, 3, 5, 7, 2, 4, 6], [1, 4, 7, 2, 5, 3, 6],
+     [1, 5, 2, 6, 3, 7, 4], [1, 6, 2, 7, 3, 4, 5], [1, 7, 2, 3, 4, 5, 6]]
+    """
+    for jump in range(1, len(lst)):
+        reordering = []
+        for start in range(jump):
+            offset = 0
+            while start + offset < len(lst):
+                reordering.append(lst[start + offset])
+                offset += jump
+        yield reordering
 
 
 def combine(lst: List[List[X]]) -> Iterator[List[X]]:
@@ -106,8 +117,8 @@ def iterate(given: List[List[X]], perm: bool, allx: Iterable[X],
             length: int, positions: List[int]) -> Iterator[List[X]]:
     """Combine, permute, and extend the given data."""
     if perm:
-        for permutation in permute(given):
-            for combination in combine(permutation):
+        for reordering in reorder(given):
+            for combination in combine(reordering):
                 for extension in extend(combination, allx, length, positions):
                     yield extension
     else:
