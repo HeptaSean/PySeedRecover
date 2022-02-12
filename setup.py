@@ -5,7 +5,7 @@ with open("README.md", "r") as readme_file:
 
 setuptools.setup(
     name="PySeedRecover",
-    version="0.1.0",
+    version="1.0.0",
     author="Benjamin Braatz",
     author_email="bb@bbraatz.eu",
     description="Recover BIP-39 Mnemonic Seed Phrases",
@@ -22,6 +22,7 @@ setuptools.setup(
             "pydocstyle",
             "pycodestyle",
             "mypy",
+            "twine",
         ],
     },
     entry_points={
@@ -29,6 +30,9 @@ setuptools.setup(
     },
     classifiers=[
         "Programming Language :: Python",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
