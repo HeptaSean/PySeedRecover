@@ -105,28 +105,99 @@ option, up to which edit distance we want to search for valid seed phrases:
 $ seedrecover -s 1 ladder long kangaroo inherit unknown price else second \
   enter addict mystery valve riot altitude area blind fabric symbol skill \
   sunset goose shock gap grape
+ladder => ladder
+long => long, song
+kangaroo => kangaroo
+inherit => inherit
+unknown => unknown
+price => price, pride, prize, rice
+else => else
+second => second
+enter => enter
+addict => addict
+mystery => mystery
+valve => valve
+riot => riot
+'altitude' not in wordlist!
+altitude => attitude
+area => area, arena
+blind => bind, blind
+fabric => fabric
+symbol => symbol
+skill => skill, skull, still
+sunset => sunset
+goose => goose
+shock => shock, sock, stock
+gap => gap, gas, gasp
+grape => grace, grape
+Length not set. Using smallest length for given phrase.
+0 of 24 words missing.
+Seed phrases checked:          6 total,          1 fulfilled checksum,          1 without repetitions
+stake1uy5gjrvr3kql0t8j4vsn99w6y4h8zc95e22m4edjjg894kcg644qn: ladder long kangaroo inherit unknown price else second enter addict mystery valve riot attitude area bind fabric symbol skill sunset goose shock gasp grape
+[…]
+Seed phrases checked:        492 total,          3 fulfilled checksum,          3 without repetitions
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+[…]
+Seed phrases checked:      1_728 total,          8 fulfilled checksum,          8 without repetitions
 ```
+`seedrecover` first reports, which words are gonna be checked for the given
+words (due to `-s` and to words missing in the wordlist).
+It then tells us, which total seed words length it is considering and how
+many words are missing.
+During the checking phase, progress and found stake addresses with their
+seed phrases are reported.
 
 If a word is missing from your seed phrase and you know, at which position
 it is missing, you can give the position (or several possible positions)
-with the `-m`/`--missing` option:
+with the `-m`/`--missing` option (as usual on Unix systems, the list of
+options can be terminated with `--` to stop the list of positions and start
+the list of known words of the seed phrase):
 ```
-$ seedrecover -m 1 24 ladder long kangaroo inherit unknown prize else \
+$ seedrecover -m 1 24 -- ladder long kangaroo inherit unknown prize else \
   second enter addict mystery valve riot attitude area blind fabric symbol \
   skill sunset goose shock gasp
+ladder => ladder
+[…]
+gasp => gasp
+Length not set. Using smallest length for given phrase.
+1 of 24 words missing.
+Seed phrases checked:        155 total,          1 fulfilled checksum,          1 without repetitions
+stake1uy23h76c4pad8hpluvhrfzvx5ll837epvppprk6wfazvjmcu9j0fn: battle ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp
+[…]
+Seed phrases checked:      2_863 total,         12 fulfilled checksum,         12 without repetitions
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+[…]
+Seed phrases checked:      4_096 total,         16 fulfilled checksum,         16 without repetitions
 ```
 
 If you do not know, at which position a word is missing (or if several
 words are missing), the possibilities become too many to manually check.
 With `-a`/`--address`, we can give one or several stake addresses to search
-for (as usual on Unix systems, the list of options can be terminated with
-`--` to start with the known words of the seed phrase):
+for:
 ```
 $ seedrecover -a stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq \
   stake1u9vm3pq6f3a5hyvu4z80jyetuk8wt9kvdv648a6804zh0vscalg0n -- ladder long \
   kangaroo inherit unknown prize else second enter mystery valve riot \
   attitude area blind fabric symbol skill sunset goose shock gasp grape
+ladder => ladder
+[...]
+enter => enter
+mystery => mystery
+[...]
+grape => grape
+Length not set. Using smallest length for given phrase.
+1 of 24 words missing.
+Seed phrases checked:     18_459 total,         74 fulfilled checksum,         74 without repetitions
+Searched stake address found:
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+Seed phrases checked:     49_152 total,        195 fulfilled checksum,        195 without repetitions
 ```
+This check already takes almost a minute, but it only gives us the searched
+stake address and its seed phrase.
+> **Note:** It is a good idea to give the stake addresses of all your
+> wallets and accounts to `-a`.
+> You never know if you mixed up the seed phrases and the one you are
+> currently looking at is maybe for a different wallet than you think.
 
 It is also possible to abbreviate the searched stake address(es) by `...` in
 the middle:
@@ -134,15 +205,18 @@ the middle:
 $ seedrecover -a stake1u9...24r8yq stake1u9...calg0n -- ladder long \
   kangaroo inherit unknown prize else second enter mystery valve riot \
   attitude area blind fabric symbol skill sunset goose shock gasp grape
-```
-
-If you are unsure about the order (for example, exchanged rows and
-columns), the `-o`/`--order` option allows to check all permutations of the
-given words (leading to many, many phrases to check):
-```
-$ seedrecover -o -k stake1u9...24r8yq stake1u9...calg0n -- ladder else riot \
-  skill long second attitude sunset kangaroo enter area goose inherit \
-  addict blind shock unknown mystery fabric gasp prize valve symbol grape
+ladder => ladder
+[...]
+enter => enter
+mystery => mystery
+[...]
+grape => grape
+Length not set. Using smallest length for given phrase.
+1 of 24 words missing.
+Seed phrases checked:     18_459 total,         74 fulfilled checksum,         74 without repetitions
+Searched stake address found:
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+Seed phrases checked:     49_152 total,        195 fulfilled checksum,        195 without repetitions
 ```
 
 If the searched stake address is unknown, the stake addresses can be checked
@@ -150,23 +224,55 @@ via [BlockFrost](https://blockfrost.io/) for previous activity.
 For this, an API key has to be given with the `-b`/`--blockfrost` option
 (can be obtained on the given website):
 ```
-$ seedrecover -o -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ ladder else riot \
+$ seedrecover -b mainnetABCDEFGHIJKLMNOPQRZ -- ladder long kangaroo inherit \
+  unknown prize else second enter mystery valve riot attitude area blind \
+  fabric symbol skill sunset goose shock gasp grape
+ladder => ladder
+[...]
+enter => enter
+mystery => mystery
+[...]
+grape => grape
+Length not set. Using smallest length for given phrase.
+1 of 24 words missing.
+Seed phrases checked:     18_459 total,         74 fulfilled checksum,         74 without repetitions
+Active stake address found:
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+Seed phrases checked:     49_152 total,        195 fulfilled checksum,        195 without repetitions
+```
+In this case, 195 requests to BlockFrost were made.
+This number will be much higher with more missing words or in combination
+with other checks.
+Remember that there is a limit of 50 000 requests in the free tier.
+
+If you are unsure about the order, the `-o`/`--order` option allows to check
+certain plausible reorderings (exchanges of rows and columns in a rectangular
+notation of the seed phrase):
+```
+$ seedrecover -o -a stake1u9...24r8yq stake1u9...calg0n -- ladder else riot \
   skill long second attitude sunset kangaroo enter area goose inherit \
   addict blind shock unknown mystery fabric gasp prize valve symbol grape
+ladder => ladder
+[...]
+grape => grape
+Length not set. Using smallest length for given phrase.
+0 of 24 words missing.
+Seed phrases checked:          4 total,          1 fulfilled checksum,          1 without repetitions
+Searched stake address found:
+stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
+Seed phrases checked:         23 total,          1 fulfilled checksum,          1 without repetitions
 ```
-(This perhaps needs a lot of requests to BlockFrost.
-Remember that there is a limit of 50 000 requests in the free tier.)
+A check of all 24! = 6.2×10^23 permutations (for the 24 word seed phrase
+case) is not feasible.
 
-So, if we do not have any idea, what is wrong with the seed phrase, we can
-combine all these possibilities:
-```
-$ time seedrecover -s 1 -o -b mainnetABCDEFGHIJKLMNOPQRSTUVWXYZ ladder else \
-  riot skill long second altitude sunset kangaroo enter area goose inherit \
-  blind shock unknown mystery fabric gap price valve symbol grape
-```
+When combining the options (typos, missing worders, order), the number of
+possible seed phrases explodes pretty quickly.
+It will not be possible to check them on BlockFrost due to the request
+limits and the search for stake address can take hours or even days.
 
 ## Development
-To set up a development environment for this project:
+To set up a development environment for this project, just clone it, create
+a virtual environment and install it with `pip` in editable mode.
 ```
 $ git clone https://github.com/HeptaSean/PySeedRecover.git
 $ cd PySeedRecover
@@ -179,4 +285,27 @@ $ pip install -e .[dev]
 I am using `pydocstyle`, `pycodestyle` and `mypy` to lint my code and
 `doctest` to test it with tests embedded in the docstrings.
 The script `lint.sh` in the root of the project runs them all for
-individual modules: `./lint.sh seedrecover/<module>.py`
+individual modules.
+```
+$ ./lint.sh seedrecover/<module>.py
+```
+
+The test with Python 3.7 is done using `pyenv`.
+```
+$ pyenv install --list
+$ pyenv install 3.7.12
+$ PYENV_VERSION="3.7.12" python -m venv /tmp/venv
+$ source /tmp/venv/bin/activate
+$ pip install -U pip setuptools wheel
+$ pip install .[dev]
+$ ./lint.sh seedrecover/<module>.py (for all modules)
+$ (test invocations from README.md)
+```
+
+Upload to PyPI is done with `twine`, which is also installed by the `[dev]`
+option.
+```
+$ python setup.py sdist
+$ twine upload -r testpypi dist/PySeedRecover-<Version>.tar.gz
+$ twine upload dist/PySeedRecover-<Version>.tar.gz
+```
