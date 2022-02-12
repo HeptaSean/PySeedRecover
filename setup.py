@@ -5,7 +5,7 @@ with open("README.md", "r") as readme_file:
 
 setuptools.setup(
     name="PySeedRecover",
-    version="1.0.0",
+    version="1.0.1",
     author="Benjamin Braatz",
     author_email="bb@bbraatz.eu",
     description="Recover BIP-39 Mnemonic Seed Phrases",
@@ -13,6 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/HeptaSean/PySeedRecover",
     packages=["seedrecover"],
+    include_package_data=True,
     install_requires=[
         "ecpy",
         "blockfrost-python",
