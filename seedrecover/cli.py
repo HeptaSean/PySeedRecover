@@ -1,12 +1,4 @@
-"""Command line interface including input and output.
-
-TODO order.py: Start with reorder in the middle
-TODO order.py: Add exchange of adjacent positions to reorder?
-TODO stakecheck.py: Check for plausible structure of given addresses
-TODO order.py: Avoid repetitions of same seed phrases
-TODO Byron, Ledger, and Trezor support
-TODO Multi-account support
-"""
+"""Command line interface including input and output."""
 import argparse
 import sys
 
@@ -19,9 +11,13 @@ from seedrecover.bfstakecheck import BlockFrost, InactiveError
 from typing import List, Optional
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(prog: Optional[str] = None) -> argparse.Namespace:
     """Parse the command line arguments."""
-    parser = argparse.ArgumentParser()
+    description = "recover BIP-39 mnemonic seed phrases"
+    if prog:
+        parser = argparse.ArgumentParser(prog=prog, description=description)
+    else:
+        parser = argparse.ArgumentParser(description=description)
     parser.add_argument("seed", nargs="*",
                         help="known words of seed phrase", metavar="WORD")
     parser.add_argument("-w", "--wordlist",
@@ -88,9 +84,9 @@ def get_missing_positions(given: List[int], length: int,
     return missing_positions
 
 
-def main() -> None:
+def main(prog: Optional[str] = None) -> None:
     """Execute the main control flow of the seedrecover script."""
-    args = parse_args()
+    args = parse_args(prog)
     wordlist = Wordlist(args.wordlist)
     seed = get_seed(wordlist, args.seed, args.similar)
     length = get_length(args.length, len(seed))

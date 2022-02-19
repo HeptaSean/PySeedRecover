@@ -14,11 +14,14 @@ echo
 echo "mypy"
 echo "===="
 mypy $1
-echo
-echo "doctest"
-echo "======="
-if python -m doctest $1
-then echo "OK"
+if [ "$(basename $1)" != "__main__.py" ]
+then
+    echo
+    echo "doctest"
+    echo "======="
+    if python -m doctest $1
+    then echo "OK"
+    fi
 fi
 echo
 echo "TODO"
