@@ -54,12 +54,19 @@ still Python 2).
 After that, `seedrecover -h` should show you the usage information of the
 script.
 
+If for some reason `pip install`ed scripts are not on the path for
+executables on your system and you do not want to bother what is wrong, it
+can also be executed by `python -m seedrecover -h` (or `python3 -m
+seedrecover -h` if Python 3 is not the standard on your system).
+
 ## Usage
 ```
 usage: seedrecover [-h] [-w FILE] [-s EDIT DISTANCE] [-o]
                    [-l LENGTH] [-m POSITION [POSITION ...]]
                    [-a ADDRESS [ADDRESS ...]] [-b API KEY]
                    [WORD ...]
+
+recover BIP-39 mnemonic seed phrases
 
 positional arguments:
   WORD                  known words of seed phrase
@@ -309,3 +316,8 @@ $ python setup.py sdist
 $ twine upload -r testpypi dist/PySeedRecover-<Version>.tar.gz
 $ twine upload dist/PySeedRecover-<Version>.tar.gz
 ```
+
+## Changelog
+* 2022-02-12 – 1.0.0: Initial release.
+* 2022-02-12 – 1.0.1: Bugfix: English wordlist was not included in install.
+* 2022-02-19 – 1.0.2: Also allow execution by `python -m seedrecover`.

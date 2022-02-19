@@ -27,7 +27,7 @@ setuptools.setup(
         ],
     },
     entry_points={
-        "console_scripts": ["seedrecover=seedrecover.main:main"],
+        "console_scripts": ["seedrecover=seedrecover.cli:main"],
     },
     classifiers=[
         "Programming Language :: Python",
