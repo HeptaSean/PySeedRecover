@@ -16,7 +16,6 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         "ecpy",
-        "blockfrost-python",
     ],
     extras_require={
         "dev": [

@@ -6,7 +6,7 @@ from seedrecover.wordlist import Wordlist
 from seedrecover.order import iterate
 from seedrecover.keyderiv import seed_to_stakeaddress, ChecksumError
 from seedrecover.stakecheck import StakeAddresses
-from seedrecover.bfstakecheck import BlockFrost, InactiveError
+from seedrecover.koios import check_stake_address
 
 from typing import List, Optional
 
@@ -35,8 +35,8 @@ def parse_args(prog: Optional[str] = None) -> argparse.Namespace:
     parser.add_argument("-a", "--address", nargs="+", default=[],
                         help="check for stake addresses",
                         metavar="ADDRESS")
-    parser.add_argument("-b", "--blockfrost",
-                        help="check on BlockFrost", metavar="API KEY")
+    parser.add_argument("-k", "--koios", default=False, action="store_true",
+                        help="check on koios.rest")
     return parser.parse_args()
 
 
@@ -95,13 +95,6 @@ def main(prog: Optional[str] = None) -> None:
     sc = None
     if args.address:
         sc = StakeAddresses(args.address)
-    bf = None
-    if args.blockfrost:
-        try:
-            bf = BlockFrost(args.blockfrost)
-        except InactiveError as e:
-            print(e, file=sys.stderr)
-            bf = None
     total_seed_phrases = 0
     checksum_seed_phrases = 0
     for seed_phrase in iterate(seed, args.order, wordlist,
@@ -126,14 +119,10 @@ def main(prog: Optional[str] = None) -> None:
             if sc.check_stake_address(stake_address):
                 searched = True
             verbose = False
-        if bf:
-            try:
-                if bf.check_stake_address(stake_address):
-                    active = True
-                verbose = False
-            except InactiveError as e:
-                print(e, file=sys.stderr)
-                bf = None
+        if args.koios:
+            if check_stake_address(stake_address):
+                active = True
+            verbose = False
         if searched or active or verbose:
             print(file=sys.stderr)
             if searched and active:

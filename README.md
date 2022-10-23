@@ -84,8 +84,7 @@ options:
                         missing word positions
   -a ADDRESS [ADDRESS ...], --address ADDRESS [ADDRESS ...]
                         check for stake addresses
-  -b API KEY, --blockfrost API KEY
-                        check on BlockFrost
+  -k, --koios           check on koios.rest
 ```
 > **WARNING:** If you give your (partial knowledge of your) seed phrase to
 > this script on the command line, this information will be in the history
@@ -227,13 +226,11 @@ Seed phrases checked:     49_152 total,        195 fulfilled checksum,        19
 ```
 
 If the searched stake address is unknown, the stake addresses can be checked
-via [BlockFrost](https://blockfrost.io/) for previous activity.
-For this, an API key has to be given with the `-b`/`--blockfrost` option
-(can be obtained on the given website):
+via [koios.rest](https://koios.rest/) for previous activity.
 ```
-$ seedrecover -b mainnetABCDEFGHIJKLMNOPQRZ -- ladder long kangaroo inherit \
-  unknown prize else second enter mystery valve riot attitude area blind \
-  fabric symbol skill sunset goose shock gasp grape
+$ seedrecover -k ladder long kangaroo inherit unknown prize else second \
+  enter mystery valve riot attitude area blind fabric symbol skill sunset \
+  goose shock gasp grape
 ladder => ladder
 [...]
 enter => enter
@@ -247,10 +244,10 @@ Active stake address found:
 stake1u9t04dtwptk5776eluj6ruyd782k66npnf55tdrp6dvwnzs24r8yq: ladder long kangaroo inherit unknown prize else second enter addict mystery valve riot attitude area blind fabric symbol skill sunset goose shock gasp grape
 Seed phrases checked:     49_152 total,        195 fulfilled checksum,        195 without repetitions
 ```
-In this case, 195 requests to BlockFrost were made.
+In this case, 195 requests to Koios were made.
 This number will be much higher with more missing words or in combination
 with other checks.
-Remember that there is a limit of 50 000 requests in the free tier.
+Koios does a rate limit of 100 requests per 10 seconds.
 
 If you are unsure about the order, the `-o`/`--order` option allows to check
 certain plausible reorderings (exchanges of rows and columns in a rectangular
@@ -274,8 +271,7 @@ case) is not feasible.
 
 When combining the options (typos, missing worders, order), the number of
 possible seed phrases explodes pretty quickly.
-It will not be possible to check them on BlockFrost due to the request
-limits and the search for stake address can take hours or even days.
+The search for a stake address can take hours or even days.
 
 ## Development
 To set up a development environment for this project, just clone it, create
