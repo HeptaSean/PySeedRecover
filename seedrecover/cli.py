@@ -102,10 +102,8 @@ def main(prog: Optional[str] = None) -> None:
         except InactiveError as e:
             print(e, file=sys.stderr)
             bf = None
-    already_checked = set()
     total_seed_phrases = 0
     checksum_seed_phrases = 0
-    norepeat_seed_phrases = 0
     for seed_phrase in iterate(seed, args.order, wordlist,
                                length, missing_positions):
         okay = True
@@ -116,14 +114,8 @@ def main(prog: Optional[str] = None) -> None:
             okay = False
         if okay:
             checksum_seed_phrases += 1
-            if stake_address in already_checked:
-                okay = False
-            else:
-                already_checked.add(stake_address)
-                norepeat_seed_phrases += 1
         print(f"Seed phrases checked: {total_seed_phrases:10_} total, "
-              f"{checksum_seed_phrases:10_} fulfilled checksum, "
-              f"{norepeat_seed_phrases:10_} without repetitions",
+              f"{checksum_seed_phrases:10_} fulfilled checksum",
               file=sys.stderr, end="\r")
         if not okay:
             continue
