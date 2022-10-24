@@ -17,8 +17,8 @@ something like that.
 ## Crypto Currency Disclaimer
 I do not endorse the use of crypto currencies or the ecosystems built around
 them, right now.
-Proof-of-work networks like Bitcoin and Ethereum are ecologically harmful
-on an unprecedented scale.
+Proof-of-work networks like Bitcoin are ecologically harmful on an
+unprecedented scale.
 Proof-of-stake networks like Cardano do not have *that* problem, but still
 have to prove their utility for real use cases.
 
@@ -63,10 +63,10 @@ seedrecover -h` if Python 3 is not the standard on your system).
 ```
 usage: seedrecover [-h] [-w FILE] [-s EDIT DISTANCE] [-o]
                    [-l LENGTH] [-m POSITION [POSITION ...]]
-                   [-a ADDRESS [ADDRESS ...]] [-b API KEY]
+                   [-a ADDRESS [ADDRESS ...]] [-k]
                    [WORD ...]
 
-recover BIP-39 mnemonic seed phrases
+Recover Cardano seed phrases.
 
 positional arguments:
   WORD                  known words of seed phrase
@@ -282,7 +282,7 @@ $ cd PySeedRecover
 $ python3 -m venv venv
 $ source venv/bin/activate
 $ pip install -U pip setuptools wheel
-$ pip install -e .[dev]
+$ pip install -e .
 ```
 
 I am using `pydocstyle`, `pycodestyle` and `mypy` to lint my code and
@@ -295,25 +295,26 @@ $ ./lint.sh seedrecover/<module>.py
 
 The test with Python 3.7 is done using `pyenv`.
 ```
-$ pyenv install --list
-$ pyenv install 3.7.12
-$ PYENV_VERSION="3.7.12" python -m venv /tmp/venv
+$ PYENV_VERSION="3.7.13" python -m venv /tmp/venv
 $ source /tmp/venv/bin/activate
 $ pip install -U pip setuptools wheel
-$ pip install .[dev]
+$ pip install .
 $ ./lint.sh seedrecover/<module>.py (for all modules)
 $ (test invocations from README.md)
 ```
 
-Upload to PyPI is done with `twine`, which is also installed by the `[dev]`
-option.
+Upload to PyPI is done with `flit`.
 ```
-$ python setup.py sdist
-$ twine upload -r testpypi dist/PySeedRecover-<Version>.tar.gz
-$ twine upload dist/PySeedRecover-<Version>.tar.gz
+$ flit publish
 ```
 
 ## Changelog
+For versions >= 1.9.0, a `SOURCE_DATE_EPOCH` is given to enable `flit`'s
+[reproducible builds](https://flit.pypa.io/en/latest/reproducible.html).
+
 * 2022-02-12 – 1.0.0: Initial release.
 * 2022-02-12 – 1.0.1: Bugfix: English wordlist was not included in install.
 * 2022-02-19 – 1.0.2: Also allow execution by `python -m seedrecover`.
+* 2022-10-24 – 1.9.0: Change build system from setuptools to flit.
+                      Replace Blockfrost with Koios.
+                      `SOURCE_DATE_EPOCH=1666601000`

@@ -13,7 +13,7 @@ from typing import List, Optional
 
 def parse_args(prog: Optional[str] = None) -> argparse.Namespace:
     """Parse the command line arguments."""
-    description = "recover BIP-39 mnemonic seed phrases"
+    description = "Recover Cardano seed phrases."
     if prog:
         parser = argparse.ArgumentParser(prog=prog, description=description)
     else:
